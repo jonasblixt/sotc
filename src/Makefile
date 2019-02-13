@@ -11,11 +11,11 @@ CFLAGS += -I 3pp/nanovg
 #ifeq ($(OS), OSX)
 CFLAGS += -DGL_SILENCE_DEPRECATION
 CFLAGS += -lglfw -framework OpenGL -framework GLUT
+CFLAGS += -I include/
 #endif
 
 C_SRCS  = main.c
 C_SRCS += demo.c
-C_SRCS += perf.c
 C_SRCS += 3pp/nanovg/nanovg.c
 
 OBJS = $(C_SRCS:.c=.o)
