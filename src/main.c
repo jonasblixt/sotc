@@ -11,7 +11,8 @@
 #define NANOVG_GL3_IMPLEMENTATION
 #include <nanovg_gl.h>
 #include "demo.h"
-#include <sb/sb.h>
+#include <sb.h>
+#include <gui/state.h>
 
 static struct sb_context context;
 
@@ -32,7 +33,24 @@ static void key(GLFWwindow* window, int key, int scancode, int action, int mods)
 
 }
 
-int main()
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    printf("Scroll event: %f %f\n",xoffset, yoffset);
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+    printf("Mouse event: %i %i %i\n",button,action,mods);
+}
+
+static void cursor_position_callback(GLFWwindow* window, 
+                                     double xpos, 
+                                     double ypos)
+{
+    printf ("Cursor event: %f %f\n",xpos,ypos);
+}
+
+int main(int argc, char **argv)
 {
 	GLFWwindow* window;
 	DemoData data;
@@ -46,16 +64,13 @@ int main()
 
 
 	glfwSetErrorCallback(errorcb);
-#ifndef _WIN32 // don't require this on win32, and works with more cards
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#endif
 	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
 
-
-	window = glfwCreateWindow(1000, 600, "NanoVG", NULL, NULL);
+	window = glfwCreateWindow(1000, 600, "State Blaster", NULL, NULL);
 
 	if (!window) 
 	{
@@ -64,6 +79,9 @@ int main()
 	}
 
 	glfwSetKeyCallback(window, key);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+    glfwSetCursorPosCallback(window, cursor_position_callback);
 	glfwMakeContextCurrent(window);
 
 	vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES | NVG_DEBUG);
@@ -74,8 +92,35 @@ int main()
 		return SB_ERR;
 	}
 
-	if (loadDemoData(vg, &data) == -1)
-		return SB_ERR;
+
+	int font_bold = 
+        nvgCreateFont(vg, "bold", "fonts/Hack Bold Nerd Font Complete.ttf");
+
+	if (font_bold == -1) 
+    {
+		printf("Error: Could not load font\n");
+		return -1;
+	}
+
+
+	int font_italic = 
+        nvgCreateFont(vg, "italic", "fonts/Hack Italic Nerd Font Complete.ttf");
+
+	if (font_italic == -1) 
+    {
+		printf("Error: Could not load font\n");
+		return -1;
+	}
+
+
+	int font_regular = 
+        nvgCreateFont(vg, "regular", "fonts/Hack Regular Nerd Font Complete.ttf");
+
+	if (font_regular == -1) 
+    {
+		printf("Error: Could not load font\n");
+		return -1;
+	}
 
 	glfwSwapInterval(0);
 
@@ -97,17 +142,38 @@ int main()
 
 		// Update and render
 		glViewport(0, 0, fbWidth, fbHeight);
-		glClearColor(0.3f, 0.3f, 0.32f, 1.0f);
+		glClearColor(1.0f, 1.0f, 1.02f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
 		nvgBeginFrame(vg, winWidth, winHeight, pxRatio);
-		renderDemo(vg, mx,my, winWidth,winHeight, t, 0, &data);
+/**
+ *
+ * component
+ * component
+ *      component
+ *          component
+ *      component
+ *
+ * x,y,z,w,h
+ * type
+ *
+ *
+ */
+        struct sb_state s;
+        s.x = 100;
+        s.y = 100;
+        s.w = 200;
+        s.h = 300;
+        s.name = malloc(255);
+        sprintf(s.name,"Test state2");
+
+        render_state(vg, &s);
 		nvgEndFrame(vg);
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
-	freeDemoData(vg, &data);
+	//freeDemoData(vg, &data);
 	nvgDeleteGL3(vg);
 	glfwTerminate();
 

@@ -7,9 +7,6 @@
 #endif
 #include <GLFW/glfw3.h>
 #include <nanovg.h>
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
-
 
 #ifdef _MSC_VER
 #define snprintf _snprintf
@@ -78,6 +75,7 @@ void drawWindow(NVGcontext* vg, const char* title, float x, float y, float w, fl
 	nvgFill(vg);
 
 	// Drop shadow
+/*
 	shadowPaint = nvgBoxGradient(vg, x,y+2, w,h, cornerRadius*2, 10, nvgRGBA(0,0,0,128), nvgRGBA(0,0,0,0));
 	nvgBeginPath(vg);
 	nvgRect(vg, x-10,y-10, w+20,h+30);
@@ -85,8 +83,9 @@ void drawWindow(NVGcontext* vg, const char* title, float x, float y, float w, fl
 	nvgPathWinding(vg, NVG_HOLE);
 	nvgFillPaint(vg, shadowPaint);
 	nvgFill(vg);
-
+*/
 	// Header
+/*
 	headerPaint = nvgLinearGradient(vg, x,y,x,y+15, nvgRGBA(255,255,255,8), nvgRGBA(0,0,0,16));
 	nvgBeginPath(vg);
 	nvgRoundedRect(vg, x+1,y+1, w-2,30, cornerRadius-1);
@@ -97,7 +96,7 @@ void drawWindow(NVGcontext* vg, const char* title, float x, float y, float w, fl
 	nvgLineTo(vg, x+0.5f+w-1, y+0.5f+30);
 	nvgStrokeColor(vg, nvgRGBA(0,0,0,32));
 	nvgStroke(vg);
-
+*/
 	nvgFontSize(vg, 18.0f);
 	nvgFontFace(vg, "sans-bold");
 	nvgTextAlign(vg,NVG_ALIGN_CENTER|NVG_ALIGN_MIDDLE);
@@ -1054,32 +1053,35 @@ void renderDemo(NVGcontext* vg, float mx, float my, float width, float height,
 				float t, int blowup, DemoData* data)
 {
 	float x,y,popy;
-
+/*
 	drawEyes(vg, width - 250, 50, 150, 100, mx, my, t);
 	drawParagraph(vg, width - 450, 50, 150, 100, mx, my);
 	drawGraph(vg, 0, height/2, width, height/2, t);
 	drawColorwheel(vg, width - 300, height - 300, 250.0f, 250.0f, t);
-
+*/
 	// Line joints
-	drawLines(vg, 120, height-50, 600, 50, t);
+	//drawLines(vg, 120, height-50, 600, 50, t);
 
 	// Line caps
-	drawWidths(vg, 10, 50, 30);
+	//drawWidths(vg, 10, 50, 30);
 
 	// Line caps
-	drawCaps(vg, 10, 300, 30);
+	//drawCaps(vg, 10, 300, 30);
 
-	drawScissor(vg, 50, height-80, t);
 
+	//drawScissor(vg, 50, height-80, t);
+/*
 	nvgSave(vg);
 	if (blowup) {
 		nvgRotate(vg, sinf(t*0.3f)*5.0f/180.0f*NVG_PI);
 		nvgScale(vg, 2.0f, 2.0f);
 	}
-
+*/
 	// Widgets
 	drawWindow(vg, "Widgets `n Stuff", 50, 50, 300, 400);
+    
 	x = 60; y = 95;
+/*
 	drawSearchBox(vg, "Search", x,y,280,25);
 	y += 40;
 	drawDropDown(vg, "Effects", x,y,280,28);
@@ -1103,114 +1105,13 @@ void renderDemo(NVGcontext* vg, float mx, float my, float width, float height,
 	drawEditBoxNum(vg, "123.00", "px", x+180,y, 100,28);
 	drawSlider(vg, 0.4f, x,y, 170,28);
 	y += 55;
-
+*/
 	drawButton(vg, ICON_TRASH, "Delete", x, y, 160, 28, nvgRGBA(128,16,8,255));
 	drawButton(vg, 0, "Cancel", x+170, y, 110, 28, nvgRGBA(0,0,0,0));
 
 	// Thumbnails box
-	drawThumbnails(vg, 365, popy-30, 160, 300, data->images, 12, t);
+	//drawThumbnails(vg, 365, popy-30, 160, 300, data->images, 12, t);
 
 	nvgRestore(vg);
 }
 
-static int mini(int a, int b) { return a < b ? a : b; }
-
-static void unpremultiplyAlpha(unsigned char* image, int w, int h, int stride)
-{
-	int x,y;
-
-	// Unpremultiply
-	for (y = 0; y < h; y++) {
-		unsigned char *row = &image[y*stride];
-		for (x = 0; x < w; x++) {
-			int r = row[0], g = row[1], b = row[2], a = row[3];
-			if (a != 0) {
-				row[0] = (int)mini(r*255/a, 255);
-				row[1] = (int)mini(g*255/a, 255);
-				row[2] = (int)mini(b*255/a, 255);
-			}
-			row += 4;
-		}
-	}
-
-	// Defringe
-	for (y = 0; y < h; y++) {
-		unsigned char *row = &image[y*stride];
-		for (x = 0; x < w; x++) {
-			int r = 0, g = 0, b = 0, a = row[3], n = 0;
-			if (a == 0) {
-				if (x-1 > 0 && row[-1] != 0) {
-					r += row[-4];
-					g += row[-3];
-					b += row[-2];
-					n++;
-				}
-				if (x+1 < w && row[7] != 0) {
-					r += row[4];
-					g += row[5];
-					b += row[6];
-					n++;
-				}
-				if (y-1 > 0 && row[-stride+3] != 0) {
-					r += row[-stride];
-					g += row[-stride+1];
-					b += row[-stride+2];
-					n++;
-				}
-				if (y+1 < h && row[stride+3] != 0) {
-					r += row[stride];
-					g += row[stride+1];
-					b += row[stride+2];
-					n++;
-				}
-				if (n > 0) {
-					row[0] = r/n;
-					row[1] = g/n;
-					row[2] = b/n;
-				}
-			}
-			row += 4;
-		}
-	}
-}
-
-static void setAlpha(unsigned char* image, int w, int h, int stride, unsigned char a)
-{
-	int x, y;
-	for (y = 0; y < h; y++) {
-		unsigned char* row = &image[y*stride];
-		for (x = 0; x < w; x++)
-			row[x*4+3] = a;
-	}
-}
-
-static void flipHorizontal(unsigned char* image, int w, int h, int stride)
-{
-	int i = 0, j = h-1, k;
-	while (i < j) {
-		unsigned char* ri = &image[i * stride];
-		unsigned char* rj = &image[j * stride];
-		for (k = 0; k < w*4; k++) {
-			unsigned char t = ri[k];
-			ri[k] = rj[k];
-			rj[k] = t;
-		}
-		i++;
-		j--;
-	}
-}
-
-void saveScreenShot(int w, int h, int premult, const char* name)
-{
-	unsigned char* image = (unsigned char*)malloc(w*h*4);
-	if (image == NULL)
-		return;
-	glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, image);
-	if (premult)
-		unpremultiplyAlpha(image, w, h, w*4);
-	else
-		setAlpha(image, w, h, w*4, 255);
-	flipHorizontal(image, w, h, w*4);
- 	stbi_write_png(name, w, h, 4, image, w*4);
- 	free(image);
-}

@@ -1,0 +1,3 @@
+[submodule "src/3pp/ufsm"]
+	path = src/3pp/ufsm
+	url = https://github.com/jonpe960/ufsm
