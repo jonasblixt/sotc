@@ -50,6 +50,11 @@ static void cursor_position_callback(GLFWwindow* window,
     printf ("Cursor event: %f %f\n",xpos,ypos);
 }
 
+void window_size_callback(GLFWwindow* window, int width, int height)
+{
+	printf("Window resize event: %u %u\n",width, height);
+}
+
 int main(int argc, char **argv)
 {
 	GLFWwindow* window;
@@ -82,6 +87,7 @@ int main(int argc, char **argv)
     glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetScrollCallback(window, scroll_callback);
     glfwSetCursorPosCallback(window, cursor_position_callback);
+    glfwSetWindowSizeCallback(window, window_size_callback);
 	glfwMakeContextCurrent(window);
 
 	vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES | NVG_DEBUG);
