@@ -11,6 +11,9 @@ enum
   SB_ERR
 };
 
+#define SB_MALLOC(x) malloc(x)
+#define SB_FREE(x) free(x)
+
 typedef void  (*sb_key_event_t) (struct sb_context *context,
                                  int key_code,
                                  int key_action,

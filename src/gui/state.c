@@ -8,8 +8,6 @@
 uint32_t render_state(NVGcontext* vg, struct sb_state *s)
 {
 	float cornerRadius = 10.0f;
-	NVGpaint shadowPaint;
-	NVGpaint headerPaint;
 
 	nvgSave(vg);
 

@@ -18,6 +18,7 @@ CFLAGS += -I include/sb
 
 C_SRCS  = main.c
 C_SRCS += gui/state.c
+C_SRCS += gui/grid.c
 C_SRCS += 3pp/nanovg/nanovg.c
 C_SRCS += 3pp/ufsm/src/ufsm.c
 C_SRCS += 3pp/ufsm/src/ufsm_stack.c

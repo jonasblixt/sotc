@@ -13,7 +13,7 @@
 #include "demo.h"
 #include <sb.h>
 #include <gui/state.h>
-
+#include <gui/grid.h>
 static struct sb_context context;
 
 void errorcb(int error, const char* desc)
@@ -112,7 +112,6 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-
 	int font_regular = 
         nvgCreateFont(vg, "regular", "fonts/Hack Regular Nerd Font Complete.ttf");
 
@@ -159,6 +158,12 @@ int main(int argc, char **argv)
  *
  *
  */
+        struct component *c;
+        
+        grid_create(&c);
+
+
+        grid_render(vg,c);
         struct sb_state s;
         s.x = 100;
         s.y = 100;
@@ -170,10 +175,9 @@ int main(int argc, char **argv)
         render_state(vg, &s);
 		nvgEndFrame(vg);
 		glfwSwapBuffers(window);
-		glfwPollEvents();
+        glfwWaitEventsTimeout(0.5);
 	}
 
-	//freeDemoData(vg, &data);
 	nvgDeleteGL3(vg);
 	glfwTerminate();
 
