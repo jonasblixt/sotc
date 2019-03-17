@@ -86,22 +86,30 @@ uint32_t menu_render(NVGcontext* vg, struct component *c)
 
     /* Draw box */
 	nvgBeginPath(vg);
-	nvgRoundedRect(vg, c->x,c->y,c->w,c->h, 5);
-	nvgFillColor(vg, nvgRGBA(120,120,120,200));
+	nvgRoundedRect(vg, c->x,c->y,c->w,c->h, 3);
+	nvgFillColor(vg, nvgRGBA(230,230,230,200));
 	nvgFill(vg);
 
 	nvgStrokeColor(vg, nvgRGBA(0,0,0,255));
-    nvgStrokeWidth(vg, 2.0);
+    nvgStrokeWidth(vg, 1.0);
 	nvgStroke(vg);
 
     /* Draw top label */
 	nvgFontSize(vg, 18.0f);
 	nvgFontFace(vg, "regular");
-	nvgTextAlign(vg,NVG_ALIGN_CENTER|NVG_ALIGN_MIDDLE);
-
+	nvgTextAlign(vg,NVG_ALIGN_LEFT);
 	nvgFillColor(vg, nvgRGBA(0,0,0,255));
-	nvgText(vg, c->x+c->w/2,c->y+16, "Add", NULL);
 
+    int n = 1;
+
+	nvgText(vg, c->x+15,c->y+n*25, "ADD", NULL);
+    n = n + 1;
+
+    for (struct menuitem *mi = m->menu; mi; mi = mi->next)
+    {
+        n = n + 1;
+	    nvgText(vg, c->x+15,c->y+25*n, mi->name, NULL);
+    }
 	nvgRestore(vg);
     return SB_OK;
 }

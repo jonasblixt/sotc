@@ -5,7 +5,8 @@
 
 uint32_t grid_create(struct component **c);
 uint32_t grid_destroy(struct component *c);
-uint32_t grid_render(NVGcontext* vg,struct component *c);
+uint32_t grid_render(NVGcontext* vg, struct component *c, int width,
+                                                          int height);
 uint32_t grid_set_spacing(struct component *c, double spacing);
 
 #endif

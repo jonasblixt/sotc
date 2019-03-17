@@ -10,10 +10,10 @@ CFLAGS += -I 3pp/nanovg
 
 #ifeq ($(OS), OSX)
 CFLAGS += -DGL_SILENCE_DEPRECATION
-CFLAGS += -lglfw -framework OpenGL -framework GLUT
 CFLAGS += -I include/ -I 3pp/ufsm/src
 CFLAGS += -I include/sb
 
+LDFLAGS = -lglfw -framework OpenGL -framework GLUT
 #endif
 
 C_SRCS  = main.c
@@ -24,14 +24,27 @@ C_SRCS += 3pp/nanovg/nanovg.c
 C_SRCS += 3pp/ufsm/src/ufsm.c
 C_SRCS += 3pp/ufsm/src/ufsm_stack.c
 C_SRCS += 3pp/ufsm/src/ufsm_queue.c
+C_SRCS += sb_machine.c
+
+XMI_SRCS = sb.xmi
+
 
 OBJS = $(C_SRCS:.c=.o)
+XMI_OBJS = $(XMI_SRCS:.xmi=.xmio)
 
 all: $(APPLICATION)
 
-$(APPLICATION): $(OBJS)
+%.o : %.c
+	@echo CC $<
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+%.xmio : %.xmi
+	@echo UFSMIMPORT $<
+	@ufsmimport $< "sb_machine"
+
+$(APPLICATION): $(XMI_OBJS) $(OBJS) 
 	$(info Link $(APPLICATION))
-	@$(CC) $(CFLAGS) $(OBJS) -o $(APPLICATION)
+	@$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $(APPLICATION)
 
 clean:
 	@-rm -f $(APPLICATION)

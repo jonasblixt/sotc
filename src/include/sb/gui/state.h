@@ -3,14 +3,11 @@
 
 #include <stdint.h>
 #include <nanovg.h>
+#include <gui/component.h>
 
-struct sb_state
-{
-    char *name;
-    float x,y,z,w,h;
-};
-
-uint32_t render_state(NVGcontext* vg, struct sb_state *s);
+uint32_t state_create(struct component **c, const char *name);
+uint32_t state_destroy(struct component *c);
+uint32_t state_render(NVGcontext* vg, struct component *c);
 
 #endif
 

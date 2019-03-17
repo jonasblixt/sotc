@@ -22,6 +22,11 @@ uint32_t grid_create(struct component **c)
 
     (*c)->data = SB_MALLOC(sizeof(struct grid));
 
+    struct grid *g = (struct grid *) (*c)->data;
+    g->grid_x = 30;
+    g->grid_y = 30;
+    g->alpha = 255;
+
     return SB_OK;
 }
 
@@ -37,25 +42,32 @@ uint32_t grid_destroy(struct component *c)
     return SB_OK;
 }
 
-uint32_t grid_render(NVGcontext* vg, struct component *c)
+uint32_t grid_render(NVGcontext* vg, struct component *c, int width,
+                                                          int height)
 {
     struct grid *g = (struct grid *) c->data;
 
+    int x_steps = (width/g->grid_x)+1;
+    int y_steps = (height/g->grid_y)+1;
+
 	nvgSave(vg);
 
-    for (uint32_t i = 0; i < 20; i++)
+    for (uint32_t i = 0; i < y_steps; i++)
     {
         nvgBeginPath(vg);
-        nvgMoveTo(vg, 0,i*30);
-        nvgLineTo(vg, 500,i*30);
-        nvgStrokeColor(vg, nvgRGBA(230,230,230,255));
+        nvgMoveTo(vg, 0,i*g->grid_y);
+        nvgLineTo(vg, width,i*g->grid_y);
+        nvgStrokeColor(vg, nvgRGBA(230,230,230,g->alpha));
         nvgStrokeWidth(vg, 1.0);
         nvgStroke(vg);
+    }
 
+    for (uint32_t i = 0; i < x_steps; i++)
+    {
         nvgBeginPath(vg);
-        nvgMoveTo(vg, i*30,0);
-        nvgLineTo(vg, i*30,500);
-        nvgStrokeColor(vg, nvgRGBA(230,230,230,255));
+        nvgMoveTo(vg, i*g->grid_x,0);
+        nvgLineTo(vg, i*g->grid_x,height);
+        nvgStrokeColor(vg, nvgRGBA(230,230,230,g->alpha));
         nvgStrokeWidth(vg, 1.0);
         nvgStroke(vg);
     }
@@ -66,6 +78,7 @@ uint32_t grid_render(NVGcontext* vg, struct component *c)
 uint32_t grid_set_spacing(struct component *c, double spacing)
 {
     struct grid *g = (struct grid *) c->data;
-
+    g->grid_x = spacing;
+    g->grid_y = spacing;
     return SB_OK;
 }
