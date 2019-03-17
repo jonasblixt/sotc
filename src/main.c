@@ -14,6 +14,7 @@
 #include <sb.h>
 #include <gui/state.h>
 #include <gui/grid.h>
+#include <gui/menu.h>
 static struct sb_context context;
 
 void errorcb(int error, const char* desc)
@@ -129,6 +130,28 @@ int main(int argc, char **argv)
 
 	glfwSwapInterval(0);
 
+    struct component *c;
+    grid_create(&c);
+
+    struct component *m;
+    menu_create(&m);
+    m->x=200;
+    m->y=200;
+    m->w=100;
+    m->h=100;
+    menu_add_item(m,"State",0);
+    menu_add_item(m,"Transition",0);
+    menu_add_item(m,"Entry action",0);
+    menu_add_item(m,"Exit action",0);
+
+    struct sb_state s;
+    s.x = 100;
+    s.y = 100;
+    s.w = 200;
+    s.h = 300;
+    s.name = malloc(255);
+    sprintf(s.name,"Test state2");
+
 	/* Main render loop */
 	while (!glfwWindowShouldClose(window))
 	{
@@ -151,34 +174,11 @@ int main(int argc, char **argv)
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
 		nvgBeginFrame(vg, winWidth, winHeight, pxRatio);
-/**
- *
- * component
- * component
- *      component
- *          component
- *      component
- *
- * x,y,z,w,h
- * type
- *
- *
- */
-        struct component *c;
-        
-        grid_create(&c);
-
 
         grid_render(vg,c);
-        struct sb_state s;
-        s.x = 100;
-        s.y = 100;
-        s.w = 200;
-        s.h = 300;
-        s.name = malloc(255);
-        sprintf(s.name,"Test state2");
+        menu_render(vg, m);
+        //render_state(vg, &s);
 
-        render_state(vg, &s);
 		nvgEndFrame(vg);
 		glfwSwapBuffers(window);
         glfwWaitEventsTimeout(0.5);
