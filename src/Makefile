@@ -17,6 +17,7 @@ LDFLAGS = -lglfw -framework OpenGL -framework GLUT
 #endif
 
 C_SRCS  = main.c
+C_SRCS += gui/component.c
 C_SRCS += gui/state.c
 C_SRCS += gui/grid.c
 C_SRCS += gui/menu.c

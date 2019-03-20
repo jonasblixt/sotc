@@ -16,12 +16,17 @@
 #include <gui/state.h>
 #include <gui/grid.h>
 #include <gui/menu.h>
+#include <gui/component.h>
 #include "sb_machine.h"
 
 static struct sb_context context;
 static struct ufsm_machine *m;
-static struct component *test_state;
+static struct component *root_view;
+static struct component *last;
+static struct component *selected = NULL;
+static double ox,oy;
 static GLFWwindow* window;
+
 void errorcb(int error, const char* desc)
 {
 	printf("GLFW error %d: %s\n", error, desc);
@@ -56,6 +61,9 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 
     if (button == 0 && action == 1)
         ufsm_process(m, EV_LEFT_CLICK);
+
+    if (button == 0 && action == 0)
+        ufsm_process(m, EV_LEFT_CLICK_UP);
 }
 
 static void cursor_position_callback(GLFWwindow* window, 
@@ -121,10 +129,60 @@ void debug_reset(struct ufsm_machine *m)
     printf (" -- | RESET      | %s\n", m->name);
 }
 
+void select_component(void)
+{
+    double mx,my;
+	glfwGetCursorPos(window, &mx, &my);
+    struct component *selected_last = NULL;
 
+    for (struct component *c = root_view;c;c = c->next)
+    {
+        if ( (mx > c->x && mx < (c->x+c->w)) &&
+             (my > c->y && my < (c->y+c->h)))
+        {
+            selected = c;
+            selected_last = c;
+        }
+        else
+        {
+            c->selected = false;
+        }
+    }
+
+    if (selected_last)
+    {
+        selected_last->selected = true;
+        ufsm_process(m, EV_SELECTED);
+    }
+}
+
+void save_offset(void)
+{
+    double mx,my;
+	glfwGetCursorPos(window, &mx, &my);
+    ox = (int) ((selected->x - mx)/20)*20;
+    oy = (int) ((selected->y - my)/20)*20;
+}
+
+void move_component(void)
+{
+    double mx,my;
+	glfwGetCursorPos(window, &mx, &my);
+    selected->x = (int) ((mx + ox)/20)*20;
+    selected->y = (int) ((my + oy)/20)*20;
+}
+
+void resize_component(void)
+{
+
+}
 
 void finalize_empty_state(void)
 {
+    struct component *c = last->next;
+    c->alpha = 1.0;
+    last = c;
+    ufsm_process(m,EV_COMPLETED);
 }
 
 void hide_add_menu(void)
@@ -146,36 +204,37 @@ void stop_add_menu_timer(void)
 void create_empty_state(void)
 {
     double my,mx;
-    state_create(&test_state, "New state");
 
+    state_create(&last->next, "New state");
+    struct component *c = last->next;
 	glfwGetCursorPos(window, &mx, &my);
-    test_state->x = mx;
-    test_state->y = my;
-    test_state->w = 200;
-    test_state->h = 200;
+    c->x = mx;
+    c->y = my;
+    c->w = 200;
+    c->h = 200;
+    c->alpha = 0.3;
 }
 
 void update_empty_state1(void)
 {
     double my,mx;
+    struct component *c = last->next;
 	glfwGetCursorPos(window, &mx, &my);
-    test_state->x = mx;
-    test_state->y = my;
+    c->x = (int) (mx/20)*20;
+    c->y = (int) (my/20)*20;
 }
 
 void update_empty_state2(void)
 {
     double my,mx;
+    struct component *c = last->next;
 	glfwGetCursorPos(window, &mx, &my);
-    test_state->w = (mx-test_state->x);
-    test_state->h = (my-test_state->y);
+    c->w = (int) ((mx-c->x)/20)*20;
+    c->h = (int) ((my-c->y)/20)*20;
 }
-
-
 
 int main(int argc, char **argv)
 {
-	DemoData data;
 	NVGcontext* vg = NULL;
 
 	if (!glfwInit()) 
@@ -183,7 +242,6 @@ int main(int argc, char **argv)
 		printf("Failed to init GLFW.");
 		return -1;
 	}
-
 
 	glfwSetErrorCallback(errorcb);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -215,7 +273,6 @@ int main(int argc, char **argv)
 		return SB_ERR;
 	}
 
-
 	int font_bold = 
         nvgCreateFont(vg, "bold", "fonts/Hack Bold Nerd Font Complete.ttf");
 
@@ -224,7 +281,6 @@ int main(int argc, char **argv)
 		printf("Error: Could not load font\n");
 		return -1;
 	}
-
 
 	int font_italic = 
         nvgCreateFont(vg, "italic", "fonts/Hack Italic Nerd Font Complete.ttf");
@@ -246,27 +302,9 @@ int main(int argc, char **argv)
 
 	glfwSwapInterval(0);
 
-    struct component *c;
-    grid_create(&c);
-    grid_set_spacing(c,20);
-
-    struct component *menu;
-    menu_create(&menu);
-    menu->x=200;
-    menu->y=200;
-    menu->w=200;
-    menu->h=300;
-    menu_add_item(menu,"State",0);
-    menu_add_item(menu,"Transition",0);
-    menu_add_item(menu,"Entry action",0);
-    menu_add_item(menu,"Exit action",0);
-
-    struct component *s;
-    state_create(&s, "State 1");
-    s->x = 100;
-    s->y = 100;
-    s->w = 200;
-    s->h = 300;
+    grid_create(&root_view);
+    grid_set_spacing(root_view,20);
+    last = root_view;
 
     m = get_MainMachine();
 
@@ -305,20 +343,13 @@ int main(int argc, char **argv)
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
 		nvgBeginFrame(vg, winWidth, winHeight, pxRatio);
-        
-        grid_render(vg,c, winWidth, winHeight);
-        //state_render(vg, s);
-       // menu_render(vg, menu);
 
-        if (test_state)
-        {
-            state_render(vg, test_state);
-        }
+        for (struct component *c = root_view; c; c = c->next)
+            component_render(vg,c,winWidth,winHeight);
 
 		nvgEndFrame(vg);
 		glfwSwapBuffers(window);
         glfwWaitEventsTimeout(0.5);
-
 
         struct ufsm_queue *q = ufsm_get_queue(m);
         uint32_t q_ev;

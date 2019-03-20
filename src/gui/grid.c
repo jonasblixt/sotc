@@ -26,6 +26,8 @@ uint32_t grid_create(struct component **c)
     g->grid_x = 30;
     g->grid_y = 30;
     g->alpha = 255;
+    (*c)->kind = SB_COMP_GRID;
+    (*c)->next = NULL;
 
     return SB_OK;
 }

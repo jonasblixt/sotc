@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <nanovg.h>
+#include <stdbool.h>
 
 enum
 {
@@ -21,11 +22,15 @@ struct component
     double z;
     double w;
     double h;
+    double alpha;
+    bool selected;
     struct component *parent;
     struct component *child;
     struct component *next;
     struct component *prev;
     void * data;
 };
+
+bool component_render(NVGcontext* vg, struct component *c,int w, int h);
 
 #endif
