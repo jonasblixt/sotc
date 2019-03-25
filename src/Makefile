@@ -25,6 +25,7 @@ C_SRCS += 3pp/nanovg/nanovg.c
 C_SRCS += 3pp/ufsm/src/ufsm.c
 C_SRCS += 3pp/ufsm/src/ufsm_stack.c
 C_SRCS += 3pp/ufsm/src/ufsm_queue.c
+C_SRCS += 3pp/ufsm/src/ufsm_debug.c
 C_SRCS += sb_machine.c
 
 XMI_SRCS = sb.xmi
