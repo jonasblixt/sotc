@@ -122,6 +122,11 @@ void move_component(void)
     selected->y = (int) ((my + oy)/20)*20;
 }
 
+void check_hot_zones(void)
+{
+    ufsm_process(m,EV_MOVE);
+}
+
 void resize_component(void)
 {
 

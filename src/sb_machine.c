@@ -8,19 +8,26 @@ static struct ufsm_transition AAAAAAFpjRhC55O0Bvc;
 static struct ufsm_transition AAAAAAFpjRiR3JPKQYg;
 static struct ufsm_state AAAAAAFpjXdDaZRjNQo;
 static struct ufsm_region AAAAAAFpjXeoAZSIsb4;
-static struct ufsm_transition AAAAAAFpjXofRZS7qrU;
 static struct ufsm_transition AAAAAAFpjYnst5UrQO8;
-static struct ufsm_transition AAAAAAFpjYqbT5VbPyI;
-static struct ufsm_transition AAAAAAFpkfw_S5YVVQQ;
-static struct ufsm_transition AAAAAAFpkfzgPpYtu1U;
-static struct ufsm_state AAAAAAFpkfil8ZWXpHg;
-static struct ufsm_entry_exit AAAAAAFpkf1LBZZG7nU;
+static struct ufsm_transition AAAAAAFpte4_oOJddzo;
 static struct ufsm_state AAAAAAFpjRgoFpOOfN8;
 static struct ufsm_entry_exit AAAAAAFpjRi7yJPdn8U;
 static struct ufsm_entry_exit AAAAAAFpkfvhjpXrqjY;
 static struct ufsm_state AAAAAAFpjVzCKpP19Ls;
-static struct ufsm_entry_exit AAAAAAFpjV38hJRMDEg;
-static struct ufsm_state AAAAAAFpjXoe3ZSq8mQ;
+static struct ufsm_region AAAAAAFptePbWuDkFgU;
+static struct ufsm_transition AAAAAAFpteSFqeENYrA;
+static struct ufsm_transition AAAAAAFpteWY_uF1c8s;
+static struct ufsm_transition AAAAAAFpteXsY_GJbFo;
+static struct ufsm_transition AAAAAAFpteY88eGfUTA;
+static struct ufsm_transition AAAAAAFpteaRq_G7_Hk;
+static struct ufsm_state AAAAAAFpteT6vOEhlrg;
+static struct ufsm_entry_exit AAAAAAFpteZl_OG00pU;
+static struct ufsm_state AAAAAAFpteU4hOFKDwk;
+static struct ufsm_entry_exit AAAAAAFpteb30OHVbhM;
+static struct ufsm_state AAAAAAFpteJm6OCZ5fA;
+static struct ufsm_entry_exit AAAAAAFpteQvUeDv058;
+static struct ufsm_state AAAAAAFpteSFSeD892c;
+static struct ufsm_state AAAAAAFptcmaWuAipnk;
 static struct ufsm_state AAAAAAFpiwAKFEQrE2s;
 static struct ufsm_state AAAAAAFpiu_hkEPZeYQ;
 static struct ufsm_state AAAAAAFpivcqJkQB6eo;
@@ -185,7 +192,7 @@ static struct ufsm_transition AAAAAAFpjRiR3JPKQYg = {
 };
 static struct ufsm_state AAAAAAFpjXdDaZRjNQo = {
   .id   = "AAAAAAFpjXdDaZRjNQo=",
-  .name = "SelectMove",
+  .name = "EditObject",
   .kind = 0,
   .parent_region = &AAAAAAFpiu9KckPTNd0,
   .entry = NULL,
@@ -198,24 +205,12 @@ static struct ufsm_state AAAAAAFpjXdDaZRjNQo = {
 static struct ufsm_region AAAAAAFpjXeoAZSIsb4 = {
   .id = "AAAAAAFpjXeoAZSIsb4=",
   .name = "Region1",
-  .state = &AAAAAAFpkfil8ZWXpHg,
-  .has_history = false,
+  .state = &AAAAAAFpjRgoFpOOfN8,
+  .has_history = true,
   .history = NULL,
-  .transition = &AAAAAAFpjXofRZS7qrU,
+  .transition = &AAAAAAFpjYnst5UrQO8,
   .parent_state = &AAAAAAFpjXdDaZRjNQo,
   .next = NULL,
-};
-static struct ufsm_transition AAAAAAFpjXofRZS7qrU = {
-  .id = "AAAAAAFpjXofRZS7qrU=",
-  .name = "",
-  .trigger = NULL,
-  .kind = 0,
-  .action = NULL,
-  .defer = false,
-  .guard = NULL,
-  .source = &AAAAAAFpjXoe3ZSq8mQ,
-  .dest = &AAAAAAFpjRgoFpOOfN8,
-  .next = &AAAAAAFpjYnst5UrQO8,
 };
 static struct ufsm_trigger AAAAAAFpjYnst5UrQO8_triggers[] = {
 {
@@ -236,91 +231,19 @@ static struct ufsm_transition AAAAAAFpjYnst5UrQO8 = {
   .defer = false,
   .guard = NULL,
   .source = &AAAAAAFpjRgoFpOOfN8,
-  .dest = &AAAAAAFpjVzCKpP19Ls,
-  .next = &AAAAAAFpjYqbT5VbPyI,
+  .dest = &AAAAAAFpteT6vOEhlrg,
+  .next = &AAAAAAFpte4_oOJddzo,
 };
-static struct ufsm_trigger AAAAAAFpjYqbT5VbPyI_triggers[] = {
-{
-  .trigger = 5,
-  .name = "EV_CURSOR",
-},
- {
-  .trigger = -1,
-  .name = NULL,
-},
-};
-static struct ufsm_transition AAAAAAFpjYqbT5VbPyI = {
-  .id = "AAAAAAFpjYqbT5VbPyI=",
+static struct ufsm_transition AAAAAAFpte4_oOJddzo = {
+  .id = "AAAAAAFpte4/oOJddzo=",
   .name = "",
-  .trigger = AAAAAAFpjYqbT5VbPyI_triggers,
+  .trigger = NULL,
   .kind = 0,
   .action = NULL,
   .defer = false,
   .guard = NULL,
-  .source = &AAAAAAFpjVzCKpP19Ls,
-  .dest = &AAAAAAFpjVzCKpP19Ls,
-  .next = &AAAAAAFpkfw_S5YVVQQ,
-};
-static struct ufsm_trigger AAAAAAFpkfw_S5YVVQQ_triggers[] = {
-{
-  .trigger = 6,
-  .name = "EV_MOVE_VERTICE",
-},
- {
-  .trigger = -1,
-  .name = NULL,
-},
-};
-static struct ufsm_transition AAAAAAFpkfw_S5YVVQQ = {
-  .id = "AAAAAAFpkfw+S5YVVQQ=",
-  .name = "",
-  .trigger = AAAAAAFpkfw_S5YVVQQ_triggers,
-  .kind = 0,
-  .action = NULL,
-  .defer = false,
-  .guard = NULL,
-  .source = &AAAAAAFpjRgoFpOOfN8,
-  .dest = &AAAAAAFpkfil8ZWXpHg,
-  .next = &AAAAAAFpkfzgPpYtu1U,
-};
-static struct ufsm_trigger AAAAAAFpkfzgPpYtu1U_triggers[] = {
-{
-  .trigger = 5,
-  .name = "EV_CURSOR",
-},
- {
-  .trigger = -1,
-  .name = NULL,
-},
-};
-static struct ufsm_transition AAAAAAFpkfzgPpYtu1U = {
-  .id = "AAAAAAFpkfzgPpYtu1U=",
-  .name = "",
-  .trigger = AAAAAAFpkfzgPpYtu1U_triggers,
-  .kind = 0,
-  .action = NULL,
-  .defer = false,
-  .guard = NULL,
-  .source = &AAAAAAFpkfil8ZWXpHg,
-  .dest = &AAAAAAFpkfil8ZWXpHg,
-  .next = NULL,
-};
-static struct ufsm_state AAAAAAFpkfil8ZWXpHg = {
-  .id   = "AAAAAAFpkfil8ZWXpHg=",
-  .name = "Resize",
-  .kind = 0,
-  .parent_region = &AAAAAAFpjXeoAZSIsb4,
-  .entry = &AAAAAAFpkf1LBZZG7nU,
-  .doact = NULL,
-  .exit = NULL,
-  .region = NULL,
-  .submachine = NULL,
-  .next = &AAAAAAFpjRgoFpOOfN8,
-};
-static struct ufsm_entry_exit AAAAAAFpkf1LBZZG7nU = {
-  .id = "AAAAAAFpkf1LBZZG7nU=",
-  .name = "resize_component",
-  .f = &resize_component,
+  .source = &AAAAAAFptcmaWuAipnk,
+  .dest = &AAAAAAFpjRgoFpOOfN8,
   .next = NULL,
 };
 static struct ufsm_state AAAAAAFpjRgoFpOOfN8 = {
@@ -349,26 +272,196 @@ static struct ufsm_entry_exit AAAAAAFpkfvhjpXrqjY = {
 };
 static struct ufsm_state AAAAAAFpjVzCKpP19Ls = {
   .id   = "AAAAAAFpjVzCKpP19Ls=",
-  .name = "Move",
+  .name = "Selected",
   .kind = 0,
   .parent_region = &AAAAAAFpjXeoAZSIsb4,
-  .entry = &AAAAAAFpjV38hJRMDEg,
+  .entry = NULL,
+  .doact = NULL,
+  .exit = NULL,
+  .region = &AAAAAAFptePbWuDkFgU,
+  .submachine = NULL,
+  .next = &AAAAAAFptcmaWuAipnk,
+};
+static struct ufsm_region AAAAAAFptePbWuDkFgU = {
+  .id = "AAAAAAFptePbWuDkFgU=",
+  .name = "Region1",
+  .state = &AAAAAAFpteT6vOEhlrg,
+  .has_history = false,
+  .history = NULL,
+  .transition = &AAAAAAFpteSFqeENYrA,
+  .parent_state = &AAAAAAFpjVzCKpP19Ls,
+  .next = NULL,
+};
+static struct ufsm_transition AAAAAAFpteSFqeENYrA = {
+  .id = "AAAAAAFpteSFqeENYrA=",
+  .name = "",
+  .trigger = NULL,
+  .kind = 0,
+  .action = NULL,
+  .defer = false,
+  .guard = NULL,
+  .source = &AAAAAAFpteSFSeD892c,
+  .dest = &AAAAAAFpteJm6OCZ5fA,
+  .next = &AAAAAAFpteWY_uF1c8s,
+};
+static struct ufsm_trigger AAAAAAFpteWY_uF1c8s_triggers[] = {
+{
+  .trigger = 5,
+  .name = "EV_MOVE",
+},
+ {
+  .trigger = -1,
+  .name = NULL,
+},
+};
+static struct ufsm_transition AAAAAAFpteWY_uF1c8s = {
+  .id = "AAAAAAFpteWY+uF1c8s=",
+  .name = "",
+  .trigger = AAAAAAFpteWY_uF1c8s_triggers,
+  .kind = 0,
+  .action = NULL,
+  .defer = false,
+  .guard = NULL,
+  .source = &AAAAAAFpteJm6OCZ5fA,
+  .dest = &AAAAAAFpteT6vOEhlrg,
+  .next = &AAAAAAFpteXsY_GJbFo,
+};
+static struct ufsm_trigger AAAAAAFpteXsY_GJbFo_triggers[] = {
+{
+  .trigger = 6,
+  .name = "EV_RESIZE",
+},
+ {
+  .trigger = -1,
+  .name = NULL,
+},
+};
+static struct ufsm_transition AAAAAAFpteXsY_GJbFo = {
+  .id = "AAAAAAFpteXsY+GJbFo=",
+  .name = "",
+  .trigger = AAAAAAFpteXsY_GJbFo_triggers,
+  .kind = 0,
+  .action = NULL,
+  .defer = false,
+  .guard = NULL,
+  .source = &AAAAAAFpteJm6OCZ5fA,
+  .dest = &AAAAAAFpteU4hOFKDwk,
+  .next = &AAAAAAFpteY88eGfUTA,
+};
+static struct ufsm_trigger AAAAAAFpteY88eGfUTA_triggers[] = {
+{
+  .trigger = 7,
+  .name = "EV_CURSOR",
+},
+ {
+  .trigger = -1,
+  .name = NULL,
+},
+};
+static struct ufsm_transition AAAAAAFpteY88eGfUTA = {
+  .id = "AAAAAAFpteY88eGfUTA=",
+  .name = "",
+  .trigger = AAAAAAFpteY88eGfUTA_triggers,
+  .kind = 0,
+  .action = NULL,
+  .defer = false,
+  .guard = NULL,
+  .source = &AAAAAAFpteT6vOEhlrg,
+  .dest = &AAAAAAFpteT6vOEhlrg,
+  .next = &AAAAAAFpteaRq_G7_Hk,
+};
+static struct ufsm_trigger AAAAAAFpteaRq_G7_Hk_triggers[] = {
+{
+  .trigger = 7,
+  .name = "EV_CURSOR",
+},
+ {
+  .trigger = -1,
+  .name = NULL,
+},
+};
+static struct ufsm_transition AAAAAAFpteaRq_G7_Hk = {
+  .id = "AAAAAAFpteaRq+G7+Hk=",
+  .name = "",
+  .trigger = AAAAAAFpteaRq_G7_Hk_triggers,
+  .kind = 0,
+  .action = NULL,
+  .defer = false,
+  .guard = NULL,
+  .source = &AAAAAAFpteU4hOFKDwk,
+  .dest = &AAAAAAFpteU4hOFKDwk,
+  .next = NULL,
+};
+static struct ufsm_state AAAAAAFpteT6vOEhlrg = {
+  .id   = "AAAAAAFpteT6vOEhlrg=",
+  .name = "Move",
+  .kind = 0,
+  .parent_region = &AAAAAAFptePbWuDkFgU,
+  .entry = &AAAAAAFpteZl_OG00pU,
   .doact = NULL,
   .exit = NULL,
   .region = NULL,
   .submachine = NULL,
-  .next = &AAAAAAFpjXoe3ZSq8mQ,
+  .next = &AAAAAAFpteU4hOFKDwk,
 };
-static struct ufsm_entry_exit AAAAAAFpjV38hJRMDEg = {
-  .id = "AAAAAAFpjV38hJRMDEg=",
+static struct ufsm_entry_exit AAAAAAFpteZl_OG00pU = {
+  .id = "AAAAAAFpteZl/OG00pU=",
   .name = "move_component",
   .f = &move_component,
   .next = NULL,
 };
-static struct ufsm_state AAAAAAFpjXoe3ZSq8mQ = {
-  .id   = "AAAAAAFpjXoe3ZSq8mQ=",
+static struct ufsm_state AAAAAAFpteU4hOFKDwk = {
+  .id   = "AAAAAAFpteU4hOFKDwk=",
+  .name = "Resize",
+  .kind = 0,
+  .parent_region = &AAAAAAFptePbWuDkFgU,
+  .entry = &AAAAAAFpteb30OHVbhM,
+  .doact = NULL,
+  .exit = NULL,
+  .region = NULL,
+  .submachine = NULL,
+  .next = &AAAAAAFpteJm6OCZ5fA,
+};
+static struct ufsm_entry_exit AAAAAAFpteb30OHVbhM = {
+  .id = "AAAAAAFpteb30OHVbhM=",
+  .name = "resize_component",
+  .f = &resize_component,
+  .next = NULL,
+};
+static struct ufsm_state AAAAAAFpteJm6OCZ5fA = {
+  .id   = "AAAAAAFpteJm6OCZ5fA=",
+  .name = "Check",
+  .kind = 0,
+  .parent_region = &AAAAAAFptePbWuDkFgU,
+  .entry = &AAAAAAFpteQvUeDv058,
+  .doact = NULL,
+  .exit = NULL,
+  .region = NULL,
+  .submachine = NULL,
+  .next = &AAAAAAFpteSFSeD892c,
+};
+static struct ufsm_entry_exit AAAAAAFpteQvUeDv058 = {
+  .id = "AAAAAAFpteQvUeDv058=",
+  .name = "check_hot_zones",
+  .f = &check_hot_zones,
+  .next = NULL,
+};
+static struct ufsm_state AAAAAAFpteSFSeD892c = {
+  .id   = "AAAAAAFpteSFSeD892c=",
   .name = "Init",
   .kind = 1,
+  .parent_region = &AAAAAAFptePbWuDkFgU,
+  .entry = NULL,
+  .doact = NULL,
+  .exit = NULL,
+  .region = NULL,
+  .submachine = NULL,
+  .next = NULL,
+};
+static struct ufsm_state AAAAAAFptcmaWuAipnk = {
+  .id   = "AAAAAAFptcmaWuAipnk=",
+  .name = "(null)",
+  .kind = 3,
   .parent_region = &AAAAAAFpjXeoAZSIsb4,
   .entry = NULL,
   .doact = NULL,
@@ -478,7 +571,7 @@ static struct ufsm_transition AAAAAAFpiwKLskT2iCg = {
 };
 static struct ufsm_trigger AAAAAAFpiwSONEVuijg_triggers[] = {
 {
-  .trigger = 7,
+  .trigger = 8,
   .name = "EV_ADD_MENU_TIMER",
 },
  {
@@ -512,11 +605,11 @@ static struct ufsm_transition AAAAAAFpiwWX8EWRkiU = {
 };
 static struct ufsm_trigger AAAAAAFpixC_0EXaK2U_triggers[] = {
 {
-  .trigger = 8,
+  .trigger = 9,
   .name = "EV_KEY_S",
 },
 {
-  .trigger = 9,
+  .trigger = 10,
   .name = "EV_ADD_STATE",
 },
  {
@@ -673,7 +766,7 @@ static struct ufsm_region AAAAAAFpjCrT_JoP12o = {
 };
 static struct ufsm_trigger AAAAAAFpixaNAEbHB7U_triggers[] = {
 {
-  .trigger = 5,
+  .trigger = 7,
   .name = "EV_CURSOR",
 },
  {
@@ -695,7 +788,7 @@ static struct ufsm_transition AAAAAAFpixaNAEbHB7U = {
 };
 static struct ufsm_trigger AAAAAAFpixgJvEcR2Gw_triggers[] = {
 {
-  .trigger = 10,
+  .trigger = 11,
   .name = "EV_ENTER",
 },
 {
@@ -721,7 +814,7 @@ static struct ufsm_transition AAAAAAFpixgJvEcR2Gw = {
 };
 static struct ufsm_trigger AAAAAAFpixihvUcxF6U_triggers[] = {
 {
-  .trigger = 5,
+  .trigger = 7,
   .name = "EV_CURSOR",
 },
  {
@@ -755,7 +848,7 @@ static struct ufsm_transition AAAAAAFpixmWT0eMxfg = {
 };
 static struct ufsm_trigger AAAAAAFpixoPJkf3acc_triggers[] = {
 {
-  .trigger = 10,
+  .trigger = 11,
   .name = "EV_ENTER",
 },
 {

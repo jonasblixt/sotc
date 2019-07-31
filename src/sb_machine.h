@@ -4,10 +4,11 @@
 #ifndef NULL
  #define NULL (void *) 0
 #endif
-void resize_component(void);
 void select_component(void);
 void save_offset(void);
 void move_component(void);
+void resize_component(void);
+void check_hot_zones(void);
 void show_add_menu(void);
 void hide_add_menu(void);
 void stop_add_menu_timer(void);
@@ -22,8 +23,9 @@ enum {
   EV_LEFT_CLICK,
   EV_LEFT_CLICK_UP,
   EV_SELECTED,
+  EV_MOVE,
+  EV_RESIZE,
   EV_CURSOR,
-  EV_MOVE_VERTICE,
   EV_ADD_MENU_TIMER,
   EV_KEY_S,
   EV_ADD_STATE,
