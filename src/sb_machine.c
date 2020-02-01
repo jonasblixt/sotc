@@ -9,22 +9,24 @@ static struct ufsm_transition AAAAAAFpjRiR3JPKQYg;
 static struct ufsm_state AAAAAAFpjXdDaZRjNQo;
 static struct ufsm_region AAAAAAFpjXeoAZSIsb4;
 static struct ufsm_transition AAAAAAFpjYnst5UrQO8;
+static struct ufsm_action AAAAAAFuDLjE0qbbwA8;
 static struct ufsm_transition AAAAAAFpte4_oOJddzo;
 static struct ufsm_state AAAAAAFpjRgoFpOOfN8;
 static struct ufsm_entry_exit AAAAAAFpjRi7yJPdn8U;
-static struct ufsm_entry_exit AAAAAAFpkfvhjpXrqjY;
 static struct ufsm_state AAAAAAFpjVzCKpP19Ls;
 static struct ufsm_region AAAAAAFptePbWuDkFgU;
 static struct ufsm_transition AAAAAAFpteSFqeENYrA;
 static struct ufsm_transition AAAAAAFpteWY_uF1c8s;
 static struct ufsm_transition AAAAAAFpteXsY_GJbFo;
 static struct ufsm_transition AAAAAAFpteY88eGfUTA;
+static struct ufsm_action AAAAAAFuDLTlE6bCdXI;
 static struct ufsm_transition AAAAAAFpteaRq_G7_Hk;
+static struct ufsm_action AAAAAAFuDL9YSab0et4;
+static struct ufsm_transition AAAAAAFuDM6Z_KcMn8c;
 static struct ufsm_state AAAAAAFpteT6vOEhlrg;
-static struct ufsm_entry_exit AAAAAAFpteZl_OG00pU;
 static struct ufsm_state AAAAAAFpteU4hOFKDwk;
-static struct ufsm_entry_exit AAAAAAFpteb30OHVbhM;
 static struct ufsm_state AAAAAAFpteJm6OCZ5fA;
+static struct ufsm_entry_exit AAAAAAFuDFh4caZWPds;
 static struct ufsm_entry_exit AAAAAAFpteQvUeDv058;
 static struct ufsm_state AAAAAAFpteSFSeD892c;
 static struct ufsm_state AAAAAAFptcmaWuAipnk;
@@ -227,12 +229,18 @@ static struct ufsm_transition AAAAAAFpjYnst5UrQO8 = {
   .name = "",
   .trigger = AAAAAAFpjYnst5UrQO8_triggers,
   .kind = 0,
-  .action = NULL,
+  .action = &AAAAAAFuDLjE0qbbwA8,
   .defer = false,
   .guard = NULL,
   .source = &AAAAAAFpjRgoFpOOfN8,
   .dest = &AAAAAAFpteT6vOEhlrg,
   .next = &AAAAAAFpte4_oOJddzo,
+};
+static struct ufsm_action AAAAAAFuDLjE0qbbwA8 = {
+  .id = "AAAAAAFuDLjE0qbbwA8=",
+  .name = "save_offset",
+  .f = &save_offset,
+  .next = NULL,
 };
 static struct ufsm_transition AAAAAAFpte4_oOJddzo = {
   .id = "AAAAAAFpte4/oOJddzo=",
@@ -253,7 +261,7 @@ static struct ufsm_state AAAAAAFpjRgoFpOOfN8 = {
   .parent_region = &AAAAAAFpjXeoAZSIsb4,
   .entry = &AAAAAAFpjRi7yJPdn8U,
   .doact = NULL,
-  .exit = &AAAAAAFpkfvhjpXrqjY,
+  .exit = NULL,
   .region = NULL,
   .submachine = NULL,
   .next = &AAAAAAFpjVzCKpP19Ls,
@@ -262,12 +270,6 @@ static struct ufsm_entry_exit AAAAAAFpjRi7yJPdn8U = {
   .id = "AAAAAAFpjRi7yJPdn8U=",
   .name = "select_component",
   .f = &select_component,
-  .next = NULL,
-};
-static struct ufsm_entry_exit AAAAAAFpkfvhjpXrqjY = {
-  .id = "AAAAAAFpkfvhjpXrqjY=",
-  .name = "save_offset",
-  .f = &save_offset,
   .next = NULL,
 };
 static struct ufsm_state AAAAAAFpjVzCKpP19Ls = {
@@ -363,12 +365,18 @@ static struct ufsm_transition AAAAAAFpteY88eGfUTA = {
   .name = "",
   .trigger = AAAAAAFpteY88eGfUTA_triggers,
   .kind = 0,
-  .action = NULL,
+  .action = &AAAAAAFuDLTlE6bCdXI,
   .defer = false,
   .guard = NULL,
   .source = &AAAAAAFpteT6vOEhlrg,
   .dest = &AAAAAAFpteT6vOEhlrg,
   .next = &AAAAAAFpteaRq_G7_Hk,
+};
+static struct ufsm_action AAAAAAFuDLTlE6bCdXI = {
+  .id = "AAAAAAFuDLTlE6bCdXI=",
+  .name = "move_component",
+  .f = &move_component,
+  .next = NULL,
 };
 static struct ufsm_trigger AAAAAAFpteaRq_G7_Hk_triggers[] = {
 {
@@ -385,11 +393,29 @@ static struct ufsm_transition AAAAAAFpteaRq_G7_Hk = {
   .name = "",
   .trigger = AAAAAAFpteaRq_G7_Hk_triggers,
   .kind = 0,
-  .action = NULL,
+  .action = &AAAAAAFuDL9YSab0et4,
   .defer = false,
   .guard = NULL,
   .source = &AAAAAAFpteU4hOFKDwk,
   .dest = &AAAAAAFpteU4hOFKDwk,
+  .next = &AAAAAAFuDM6Z_KcMn8c,
+};
+static struct ufsm_action AAAAAAFuDL9YSab0et4 = {
+  .id = "AAAAAAFuDL9YSab0et4=",
+  .name = "resize_component",
+  .f = &resize_component,
+  .next = NULL,
+};
+static struct ufsm_transition AAAAAAFuDM6Z_KcMn8c = {
+  .id = "AAAAAAFuDM6Z/KcMn8c=",
+  .name = "",
+  .trigger = NULL,
+  .kind = 0,
+  .action = NULL,
+  .defer = false,
+  .guard = NULL,
+  .source = &AAAAAAFpteJm6OCZ5fA,
+  .dest = &AAAAAAFpjRgoFpOOfN8,
   .next = NULL,
 };
 static struct ufsm_state AAAAAAFpteT6vOEhlrg = {
@@ -397,53 +423,47 @@ static struct ufsm_state AAAAAAFpteT6vOEhlrg = {
   .name = "Move",
   .kind = 0,
   .parent_region = &AAAAAAFptePbWuDkFgU,
-  .entry = &AAAAAAFpteZl_OG00pU,
+  .entry = NULL,
   .doact = NULL,
   .exit = NULL,
   .region = NULL,
   .submachine = NULL,
   .next = &AAAAAAFpteU4hOFKDwk,
 };
-static struct ufsm_entry_exit AAAAAAFpteZl_OG00pU = {
-  .id = "AAAAAAFpteZl/OG00pU=",
-  .name = "move_component",
-  .f = &move_component,
-  .next = NULL,
-};
 static struct ufsm_state AAAAAAFpteU4hOFKDwk = {
   .id   = "AAAAAAFpteU4hOFKDwk=",
   .name = "Resize",
   .kind = 0,
   .parent_region = &AAAAAAFptePbWuDkFgU,
-  .entry = &AAAAAAFpteb30OHVbhM,
+  .entry = NULL,
   .doact = NULL,
   .exit = NULL,
   .region = NULL,
   .submachine = NULL,
   .next = &AAAAAAFpteJm6OCZ5fA,
 };
-static struct ufsm_entry_exit AAAAAAFpteb30OHVbhM = {
-  .id = "AAAAAAFpteb30OHVbhM=",
-  .name = "resize_component",
-  .f = &resize_component,
-  .next = NULL,
-};
 static struct ufsm_state AAAAAAFpteJm6OCZ5fA = {
   .id   = "AAAAAAFpteJm6OCZ5fA=",
   .name = "Check",
   .kind = 0,
   .parent_region = &AAAAAAFptePbWuDkFgU,
-  .entry = &AAAAAAFpteQvUeDv058,
+  .entry = &AAAAAAFuDFh4caZWPds,
   .doact = NULL,
   .exit = NULL,
   .region = NULL,
   .submachine = NULL,
   .next = &AAAAAAFpteSFSeD892c,
 };
-static struct ufsm_entry_exit AAAAAAFpteQvUeDv058 = {
-  .id = "AAAAAAFpteQvUeDv058=",
+static struct ufsm_entry_exit AAAAAAFuDFh4caZWPds = {
+  .id = "AAAAAAFuDFh4caZWPds=",
   .name = "check_hot_zones",
   .f = &check_hot_zones,
+  .next = &AAAAAAFpteQvUeDv058,
+};
+static struct ufsm_entry_exit AAAAAAFpteQvUeDv058 = {
+  .id = "AAAAAAFpteQvUeDv058=",
+  .name = "select_move_component",
+  .f = &select_move_component,
   .next = NULL,
 };
 static struct ufsm_state AAAAAAFpteSFSeD892c = {

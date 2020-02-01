@@ -85,6 +85,9 @@ void select_component(void)
 	glfwGetCursorPos(window, &mx, &my);
     struct component *selected_last = NULL;
 
+    selected = NULL;
+
+
     for (struct component *c = root_view;c;c = c->next)
     {
         if ( (mx > c->x && mx < (c->x+c->w)) &&
@@ -106,6 +109,36 @@ void select_component(void)
     }
 }
 
+void select_move_component(void)
+{
+    double mx,my;
+    glfwGetCursorPos(window, &mx, &my);
+    struct component *selected_last = NULL;
+
+    selected = NULL;
+
+
+    for (struct component *c = root_view;c;c = c->next)
+    {
+        if ( (mx > c->x && mx < (c->x+c->w)) &&
+             (my > c->y && my < (c->y+c->h)))
+        {
+            selected = c;
+            selected_last = c;
+        }
+        else
+        {
+            c->selected = false;
+        }
+    }
+
+    if (selected_last)
+    {
+        selected_last->selected = true;
+        ufsm_process(m, EV_MOVE);
+    }
+}
+
 void save_offset(void)
 {
     double mx,my;
@@ -118,13 +151,13 @@ void move_component(void)
 {
     double mx,my;
 	glfwGetCursorPos(window, &mx, &my);
-    selected->x = (int) ((mx + ox)/20)*20;
-    selected->y = (int) ((my + oy)/20)*20;
+    selected->x = (int) ((mx+ox)/20)*20;
+    selected->y = (int) ((my+oy)/20)*20;
 }
 
 void check_hot_zones(void)
 {
-    ufsm_process(m,EV_MOVE);
+    //ufsm_process(m,EV_MOVE);
 }
 
 void resize_component(void)

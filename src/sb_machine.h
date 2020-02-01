@@ -4,11 +4,12 @@
 #ifndef NULL
  #define NULL (void *) 0
 #endif
-void select_component(void);
 void save_offset(void);
+void select_component(void);
 void move_component(void);
 void resize_component(void);
 void check_hot_zones(void);
+void select_move_component(void);
 void show_add_menu(void);
 void hide_add_menu(void);
 void stop_add_menu_timer(void);
