@@ -227,6 +227,7 @@ void update_empty_state2(void)
 
 int main(int argc, char **argv)
 {
+    char banner[128];
     NVGcontext* vg = NULL;
 
     if (!glfwInit())
@@ -235,6 +236,8 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    snprintf(banner, sizeof(banner), "State blaster v%s", PACKAGE_VERSION);
+
     glfwSetErrorCallback(errorcb);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
@@ -242,7 +245,7 @@ int main(int argc, char **argv)
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
 
-    window = glfwCreateWindow(1000, 600, "State Blaster", NULL, NULL);
+    window = glfwCreateWindow(1000, 600, banner, NULL, NULL);
 
     if (!window)
     {

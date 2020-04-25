@@ -1,7 +1,7 @@
 dnl State Blaster
 
 AC_PREREQ(2.59)
-AC_INIT([bpak], [0.1.0], [Jonas Blixt, <jonpe960@gmail.com>])
+AC_INIT([stateblaster], [0.1.0], [Jonas Blixt, <jonpe960@gmail.com>])
 
 m4_pattern_forbid([^AX_(CHECK_ENABLE_DEBUG|CODE_COVERAGE|COMPILER_FLAGS|COMPILER_FLAGS_(CFLAGS|CXXFLAGS|LDFLAGS))\b],
   [Unexpanded AX_ macro found. Please install GNU autoconf-archive])
@@ -29,6 +29,12 @@ PKG_CHECK_MODULES(JSONC, [json-c >= 0.13.0])
 AC_SUBST(JSONC_CFLAGS)
 AC_SUBST(JSONC_LDFLAGS)
 AC_SUBST(JSONC_LIBS)
+
+
+PKG_CHECK_MODULES(GLFW, [glfw3 >= 3.2.0])
+AC_SUBST(GLFW_CFLAGS)
+AC_SUBST(GLFW_LDFLAGS)
+AC_SUBST(GLFW_LIBS)
 
 AC_CANONICAL_HOST
 
@@ -61,6 +67,7 @@ AM_CONDITIONAL([WINDOWS], [test "$build_windows" = "yes"])
 AM_CONDITIONAL([OSX], [test "$build_mac" = "yes"])
 
 AC_CONFIG_FILES([Makefile
+                lib/Makefile
                 src/Makefile
                 test/Makefile])
 
