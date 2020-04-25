@@ -32,5 +32,6 @@ struct component
 };
 
 bool component_render(NVGcontext* vg, struct component *c,int w, int h);
+bool component_hotzone_selected(struct component *c, double mx, double my);
 
 #endif

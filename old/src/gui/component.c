@@ -24,3 +24,19 @@ bool component_render(NVGcontext* vg, struct component *c,int w, int h)
 
     return true;
 }
+
+bool component_hotzone_selected(struct component *c, double mx, double my)
+{
+    switch (c->kind)
+    {
+        case SB_COMP_INVALID:
+            return false;
+        break;
+        case SB_COMP_STATE:
+        break;
+        default:
+            return false;
+    }
+
+    return false;
+}
