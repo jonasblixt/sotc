@@ -50,3 +50,14 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+.DS_Store
+Makefile.in
+TODO.txt
+aclocal.m4
+autom4te.cache/
+build-aux/
+build/
+configure
+m4/
+src/Makefile.in
+test/Makefile.in
