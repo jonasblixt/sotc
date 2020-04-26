@@ -1,0 +1,25 @@
+language: c
+compiler: gcc
+dist: bionic
+python:
+  - "3.6"
+
+addons:
+  apt:
+    update: true
+    packages:
+      - autoconf-archive
+      - uuid-dev
+      - libglew-dev
+
+script:
+    - autoreconf -fi
+    - ./configure --enable-code-coverage
+    - make check
+
+jobs:
+    include:
+        -   stage: Code Coverage
+            after_success:
+                - cd src/
+                - bash <(curl -s https://codecov.io/bash)
