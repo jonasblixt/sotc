@@ -1,8 +1,9 @@
-lib_LTLIBRARIES = libstateblaster.la
+lib_LTLIBRARIES = libtcm.la
 
-libstateblaster_la_SOURCES = file.c
+libtcm_la_SOURCES = tcm.c \
+					model.c
 
-libstateblaster_la_CFLAGS = -I$(top_srcdir)/include \
+libtcm_la_CFLAGS = -I$(top_srcdir)/include \
 							$(JSONC_CFLAGS)
 
-libstateblaster_la_LIBS = $(JSONC_LIBS)
+libtcm_la_LIBS = $(JSONC_LIBS)

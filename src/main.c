@@ -56,7 +56,7 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    snprintf(banner, sizeof(banner), "State blaster v%s", PACKAGE_VERSION);
+    snprintf(banner, sizeof(banner), "The Credible Machine v%s", PACKAGE_VERSION);
 
     glfwSetErrorCallback(errorcb);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
