@@ -4,11 +4,6 @@
 #include <json.h>
 #include "nala.h"
 
-TEST(version)
-{
-    printf("TCM Library version: %s\n", tcm_library_version());
-}
-
 TEST(load_model)
 {
     int rc;
@@ -25,6 +20,20 @@ TEST(load_model)
     }
 
 
+    rc = tcm_model_free(model);
+    ASSERT_EQ(rc, TCM_OK);
+}
+
+
+TEST(create_model)
+{
+    int rc;
+    struct tcm_model *model;
+
+    rc = tcm_model_create(&model, "Test");
+    ASSERT_EQ(rc, TCM_OK);
+    ASSERT(model != NULL);
+    ASSERT_EQ((char *) tcm_model_name(model), "Test");
     rc = tcm_model_free(model);
     ASSERT_EQ(rc, TCM_OK);
 }

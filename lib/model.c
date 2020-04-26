@@ -3,11 +3,15 @@
 #include <tcm/tcm.h>
 #include <tcm/model.h>
 
+static int tcm_model_parse(struct tcm_model *model)
+{
+    return TCM_OK;
+}
+
 int tcm_model_load(const char *filename, struct tcm_model **model_pp)
 {
     int rc = -TCM_ERROR;
     struct tcm_model *model = (*model_pp);
-    
 
     TCM_INFO("Loading model %s...", filename);
 
@@ -82,8 +86,18 @@ int tcm_model_load(const char *filename, struct tcm_model **model_pp)
     free(raw_json_data);
     fclose(fp);
 
+    rc = tcm_model_parse(model);
+
+    if (rc != TCM_OK)
+    {
+        TCM_ERR("Parse error");
+        goto err_free_json;
+    }
+
     return TCM_OK;
 
+err_free_json:
+    json_object_put(model->jroot);
 err_free_json_tok:
     json_tokener_free(tok);
 err_free_json_data:
@@ -95,6 +109,27 @@ err_free_model:
     return rc;
 }
 
+int tcm_model_create(struct tcm_model **model_pp, const char *name)
+{
+    struct tcm_model *model = NULL;
+
+    model = malloc(sizeof(struct tcm_model));
+
+    if (!model)
+    {
+        TCM_ERR("Could not allocate memory for model");
+        return -TCM_ERR_MEM;
+    }
+
+    memset(model, 0, sizeof(*model));
+    (*model_pp) = model;
+    model->name = name;
+
+    TCM_DEBUG("Created model '%s'", name);
+
+    return TCM_OK;
+}
+
 int tcm_model_write(const char *filename, struct tcm_model *model)
 {
     return -TCM_ERROR;
@@ -102,12 +137,16 @@ int tcm_model_write(const char *filename, struct tcm_model *model)
 
 int tcm_model_free(struct tcm_model *model)
 {
-    json_object_put(model->jroot);
+    if (model->jroot)
+    {
+        json_object_put(model->jroot);
+    }
+
     free(model);
     return TCM_OK;
 }
 
 const char * tcm_model_name(struct tcm_model *model)
 {
-    return NULL;
+    return model->name;
 }

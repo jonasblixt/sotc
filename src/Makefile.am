@@ -10,11 +10,18 @@ tcm_CFLAGS = -I$(top_srcdir)/include \
 
 tcm_LDFLAGS =
 
+tcm_LDADD = $(JSONC_LIBS) \
+			$(GLFW_LIBS)
+
 if OSX
 tcm_CFLAGS += -DGL_SILENCE_DEPRECATION
 tcm_LDFLAGS += -framework OpenGL -framework GLUT
 endif
 
-tcm_LDADD = $(JSONC_LIBS) \
-					$(GLFW_LIBS)
+if LINUX
+tcm_CFLAGS += $(GL_CFLAGS)
+tcm_LDADD += $(GL_LIBS)
+tcm_LDFLAGS += -lm
+endif
+
 

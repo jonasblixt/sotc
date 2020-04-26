@@ -75,9 +75,8 @@ struct tcm_region
 {
     const char *id;
     const char *name;
+    bool page;
     bool has_history;
-    struct tcm_state *current;
-    struct tcm_state *history;
     struct tcm_state *state;
     struct tcm_transition *transition;
     struct tcm_state *parent_state;
@@ -89,23 +88,25 @@ struct tcm_state
     const char *id;
     const char *name;
     enum tcm_state_kind kind;
-    struct tcm_entry_exit *entry;
-    struct tcm_doact *doact;
-    struct tcm_entry_exit *exit;
-    struct tcm_region *region;
+    struct tcm_entry_exit *entries;
+    struct tcm_doact *doacts;
+    struct tcm_entry_exit *exits;
+    struct tcm_region *regions;
     struct tcm_region *parent_region;
-    struct tcm_machine *submachine;
     struct tcm_state *next;
 };
 
 struct tcm_model
 {
     json_object *jroot;
-    struct tcm_state *root;
+    struct tcm_region *root;
+    const char *name;
 };
 
 int tcm_model_load(const char *filename, struct tcm_model **model);
+int tcm_model_create(struct tcm_model **model, const char *name);
 int tcm_model_write(const char *filename, struct tcm_model *model);
 int tcm_model_free(struct tcm_model *model);
+const char * tcm_model_name(struct tcm_model *model);
 
 #endif  // INCLUDE_TCM_MODEL_H_

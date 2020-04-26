@@ -1,9 +1,10 @@
 
 COMMON_TEST_CFLAGS = -I $(top_srcdir)/include \
                      -I $(top_srcdir)/lib \
+                     -fsanitize=address \
 					 $(JSONC_CFLAGS) \
 					 -DTCM_TEST_SRC=\"$(abs_top_srcdir)/test/\" \
-                     -fsanitize=address \
+					 -g -O0 \
 					 -fno-omit-frame-pointer
 
 COMMON_TEST_LDADD = libnala.la \
@@ -13,11 +14,24 @@ COMMON_TEST_LDADD = libnala.la \
 check_LTLIBRARIES = libnala.la
 
 libnala_la_SOURCES = nala.c
+libnala_la_CFLAGS = $(COMMON_TEST_CFLAGS)
 
-check_PROGRAMS = test1
+check_PROGRAMS = test1 \
+				 test_stack \
+				 test_model
 
 test1_SOURCES = test1.c
 test1_LDADD = $(COMMON_TEST_LDADD)
 test1_CFLAGS = $(COMMON_TEST_CFLAGS)
 
-TESTS = test1
+test_stack_SOURCES = test_stack.c
+test_stack_LDADD = $(COMMON_TEST_LDADD)
+test_stack_CFLAGS = $(COMMON_TEST_CFLAGS)
+
+test_model_SOURCES = test_model.c
+test_model_LDADD = $(COMMON_TEST_LDADD)
+test_model_CFLAGS = $(COMMON_TEST_CFLAGS)
+
+TESTS = test1 \
+		test_stack \
+		test_model

@@ -25,7 +25,7 @@ dnl Check if Libtool is present
 dnl Libtool is used for building share libraries
 AC_PROG_LIBTOOL
 
-PKG_CHECK_MODULES(JSONC, [json-c >= 0.13.0])
+PKG_CHECK_MODULES(JSONC, [json-c >= 0.10.0])
 AC_SUBST(JSONC_CFLAGS)
 AC_SUBST(JSONC_LDFLAGS)
 AC_SUBST(JSONC_LIBS)
@@ -65,6 +65,12 @@ esac
 AM_CONDITIONAL([LINUX], [test "$build_linux" = "yes"])
 AM_CONDITIONAL([WINDOWS], [test "$build_windows" = "yes"])
 AM_CONDITIONAL([OSX], [test "$build_mac" = "yes"])
+
+AM_COND_IF([LINUX],
+           [PKG_CHECK_MODULES(GL, [gl >= 19.0.0])
+            AC_SUBST(GL_CFLAGS)
+            AC_SUBST(GL_LDFLAGS)
+            AC_SUBST(GL_LIBS)])
 
 AC_CONFIG_FILES([Makefile
                 lib/Makefile
