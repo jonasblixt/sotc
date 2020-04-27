@@ -12,6 +12,7 @@ addons:
       - uuid-dev
       - libglew-dev
       - libjson-c-dev
+      - libglfw3-dev
 
 script:
     - autoreconf -fi
