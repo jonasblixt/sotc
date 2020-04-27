@@ -11,6 +11,7 @@ addons:
       - autoconf-archive
       - uuid-dev
       - libglew-dev
+      - libjson-c-dev
 
 script:
     - autoreconf -fi

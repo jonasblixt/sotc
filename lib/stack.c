@@ -7,7 +7,7 @@
 int tcm_stack_init(struct tcm_stack **stack_pp, size_t no_of_elements)
 {
     struct tcm_stack *stack = NULL;
-    size_t bytes_to_alloc = sizeof(struct tcm_stack) + 
+    size_t bytes_to_alloc = sizeof(struct tcm_stack) +
                     (sizeof(void *) * no_of_elements);
 
     stack = malloc(bytes_to_alloc);

@@ -3,6 +3,7 @@
 #include <tcm/model.h>
 #include <json.h>
 #include "nala.h"
+#include "common.h"
 
 TEST(version)
 {
@@ -14,6 +15,7 @@ TEST(load_model)
     int rc;
     struct tcm_model *model;
 
+    tcm_set_debug(tcm_test_debug);
     rc = tcm_model_load(TCM_TEST_SRC"test1.tcm", &model);
     ASSERT_EQ(rc, TCM_OK);
 

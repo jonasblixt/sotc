@@ -10,20 +10,18 @@ enum tcm_errors
 };
 
 #define TCM_INFO(...) \
-         do { printf("I %s: " , __func__);\
-              printf(__VA_ARGS__);\
-              printf("\n\r"); } while (0)
+         do { tcm_debug(1, __VA_ARGS__); } while (0)
 
 #define TCM_DEBUG(...) \
-         do { printf("I %s: " , __func__);\
-              printf(__VA_ARGS__);\
-              printf("\n\r"); } while (0)
+         do { tcm_debug(2, __VA_ARGS__); } while (0)
 
 #define TCM_ERR(...) \
-         do { fprintf(stderr, "I %s: " , __func__);\
-              fprintf(stderr, __VA_ARGS__);\
-              fprintf(stderr, "\n\r"); } while (0)
+         do { tcm_debug(0, __VA_ARGS__); } while (0)
 
+typedef int (*tcm_debug_t)(int debug_level, const char *fmt, ...);
+
+int tcm_debug(int debug_level, const char *fmt, ...);
 const char *tcm_library_version(void);
+int tcm_set_debug(tcm_debug_t debug_cb);
 
 #endif  // INCLUDE_TCM_H_

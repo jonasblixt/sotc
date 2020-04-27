@@ -20,15 +20,15 @@ check_PROGRAMS = test1 \
 				 test_stack \
 				 test_model
 
-test1_SOURCES = test1.c
+test1_SOURCES = common.c test1.c
 test1_LDADD = $(COMMON_TEST_LDADD)
 test1_CFLAGS = $(COMMON_TEST_CFLAGS)
 
-test_stack_SOURCES = test_stack.c
+test_stack_SOURCES = common.c test_stack.c
 test_stack_LDADD = $(COMMON_TEST_LDADD)
 test_stack_CFLAGS = $(COMMON_TEST_CFLAGS)
 
-test_model_SOURCES = test_model.c
+test_model_SOURCES = common.c test_model.c
 test_model_LDADD = $(COMMON_TEST_LDADD)
 test_model_CFLAGS = $(COMMON_TEST_CFLAGS)
 
