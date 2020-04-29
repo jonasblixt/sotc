@@ -4,10 +4,12 @@
         {
             "kind": "state",
             "name": "A",
+            "region": [],
         },
         {
             "kind": "state",
             "name": "B",
+            "region": [],
         },
     ],
 }
