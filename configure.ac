@@ -72,6 +72,12 @@ AM_COND_IF([LINUX],
             AC_SUBST(GL_LDFLAGS)
             AC_SUBST(GL_LIBS)])
 
+AM_COND_IF([LINUX],
+           [PKG_CHECK_MODULES(GLEW, [glew >= 2.0.0])
+            AC_SUBST(GLEW_CFLAGS)
+            AC_SUBST(GLEW_LDFLAGS)
+            AC_SUBST(GLEW_LIBS)])
+
 AC_CONFIG_FILES([Makefile
                 lib/Makefile
                 src/Makefile
