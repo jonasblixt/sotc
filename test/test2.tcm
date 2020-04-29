@@ -1,0 +1,26 @@
+{
+    "kind": "TCM Model",
+    "version": 1,
+    "name": "test2",
+    "root": [
+        {
+            "kind": "state",
+            "name": "A",
+            "region": [],
+            "transition": [],
+        },
+        {
+            "kind": "state",
+            "name": "B",
+            "region": [
+                {
+                    "kind": "state",
+                    "name": "B1",
+                    "region": [],
+                    "transition": [],
+                },
+            ],
+            "transition": [],
+        },
+    ],
+}
