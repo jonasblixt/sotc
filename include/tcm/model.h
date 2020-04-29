@@ -75,8 +75,7 @@ struct tcm_region
 {
     const char *id;
     const char *name;
-    bool page;
-    bool has_history;
+    bool off_page;
     struct tcm_state *state;
     struct tcm_transition *transition;
     struct tcm_state *parent_state;
@@ -107,6 +106,25 @@ int tcm_model_load(const char *filename, struct tcm_model **model);
 int tcm_model_create(struct tcm_model **model, const char *name);
 int tcm_model_write(const char *filename, struct tcm_model *model);
 int tcm_model_free(struct tcm_model *model);
+
+/* Region api */
+int tcm_add_region(struct tcm_state **state, bool off_page);
+
+/* State api */
+int tcm_add_state(struct tcm_region **region, const char *name);
+
+int tcm_add_exit(struct tcm_entry_exit **exit_p,
+                 struct tcm_state *state,
+                 const char *action_name);
+
+int tcm_add_entry(struct tcm_entry_exit **entry_p,
+                  struct tcm_state *state,
+                  const char *action_name);
+
+int tcm_add_transition(struct tcm_transition **transition,
+                       struct tcm_state *source,
+                       struct tcm_state *dest);
+
 const char * tcm_model_name(struct tcm_model *model);
 
 #endif  // INCLUDE_TCM_MODEL_H_
