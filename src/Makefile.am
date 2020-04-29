@@ -19,8 +19,13 @@ tcm_LDFLAGS += -framework OpenGL -framework GLUT
 endif
 
 if LINUX
-tcm_CFLAGS += $(GL_CFLAGS)
-tcm_LDADD += $(GL_LIBS)
+tcm_CFLAGS += $(GL_CFLAGS) \
+			  $(GLEW_CFLAGS) \
+			  -DNANOVG_GLEW
+
+tcm_LDADD += $(GL_LIBS) \
+			 $(GLEW_LIBS)
+
 tcm_LDFLAGS += -lm
 endif
 

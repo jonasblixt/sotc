@@ -1,26 +1,10 @@
 #include <tcm/tcm.h>
 #include <stdarg.h>
 
-static tcm_debug_t __debug_func;
-
-int tcm_set_debug(tcm_debug_t debug_cb)
+__attribute__ ((weak)) int tcm_debug(enum tcm_debug_level debug_level,
+                                        const char *fmt, ...)
 {
-    __debug_func = debug_cb;
-    return TCM_OK;
-}
-
-int tcm_debug(int debug_level, const char *fmt, ...)
-{
-    va_list args;
-    int rc;
-
-    if (!__debug_func)
-        return TCM_OK;
-
-    va_start(args, fmt);
-    rc = __debug_func(debug_level, fmt, args);
-    va_end(args);
-    return rc;
+    return 0;
 }
 
 const char * tcm_library_version(void)

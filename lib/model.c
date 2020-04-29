@@ -13,13 +13,13 @@ int tcm_model_load(const char *filename, struct tcm_model **model_pp)
     int rc = -TCM_ERROR;
     struct tcm_model *model = (*model_pp);
 
-    TCM_INFO("Loading model %s...", filename);
+    L_INFO("Loading model %s...", filename);
 
     model = malloc(sizeof(struct tcm_model));
 
     if (!model)
     {
-        TCM_ERR("Could not allocate memory for model");
+        L_ERR("Could not allocate memory for model");
         return -TCM_ERR_MEM;
     }
 
@@ -30,7 +30,7 @@ int tcm_model_load(const char *filename, struct tcm_model **model_pp)
 
     if (!fp)
     {
-        TCM_ERR("Could not open '%s'", filename);
+        L_ERR("Could not open '%s'", filename);
         rc = -TCM_ERR_IO;
         goto err_free_model;
     }
@@ -43,7 +43,7 @@ int tcm_model_load(const char *filename, struct tcm_model **model_pp)
 
     if (!raw_json_data)
     {
-        TCM_ERR("Could not allocate memory for json data");
+        L_ERR("Could not allocate memory for json data");
         rc = -TCM_ERR_MEM;
         goto err_close_fp;
     }
@@ -52,13 +52,12 @@ int tcm_model_load(const char *filename, struct tcm_model **model_pp)
 
     if (read_bytes != file_size_bytes)
     {
-        TCM_ERR("Could not read file (%s)", filename);
+        L_ERR("Could not read file (%s)", filename);
         rc = -TCM_ERR_IO;
         goto err_free_json_data;
     }
 
-
-    TCM_DEBUG("Model data loaded (%zu bytes), parsing JSON...",
+    L_DEBUG("Model data loaded (%zu bytes), parsing JSON...",
                     file_size_bytes);
 
     enum json_tokener_error jerr;
@@ -66,7 +65,7 @@ int tcm_model_load(const char *filename, struct tcm_model **model_pp)
 
     if (!tok)
     {
-        TCM_ERR("Could not allocate json tokener");
+        L_ERR("Could not allocate json tokener");
         rc = -TCM_ERR_MEM;
         goto err_free_json_data;
     }
@@ -75,12 +74,12 @@ int tcm_model_load(const char *filename, struct tcm_model **model_pp)
 
     if (tok->err != json_tokener_success)
     {
-        TCM_ERR("Parse error (%s)", json_tokener_error_desc(tok->err));
+        L_ERR("Parse error (%s)", json_tokener_error_desc(tok->err));
         rc = -TCM_ERROR;
         goto err_free_json_tok;
     }
 
-    TCM_DEBUG("Successfuly parsed json model");
+    L_DEBUG("Successfuly parsed json model");
 
     json_tokener_free(tok);
     free(raw_json_data);
@@ -90,7 +89,7 @@ int tcm_model_load(const char *filename, struct tcm_model **model_pp)
 
     if (rc != TCM_OK)
     {
-        TCM_ERR("Parse error");
+        L_ERR("Parse error");
         goto err_free_json;
     }
 
@@ -117,7 +116,7 @@ int tcm_model_create(struct tcm_model **model_pp, const char *name)
 
     if (!model)
     {
-        TCM_ERR("Could not allocate memory for model");
+        L_ERR("Could not allocate memory for model");
         return -TCM_ERR_MEM;
     }
 
@@ -125,7 +124,7 @@ int tcm_model_create(struct tcm_model **model_pp, const char *name)
     (*model_pp) = model;
     model->name = name;
 
-    TCM_DEBUG("Created model '%s'", name);
+    L_DEBUG("Created model '%s'", name);
 
     return TCM_OK;
 }

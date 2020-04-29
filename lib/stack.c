@@ -14,7 +14,7 @@ int tcm_stack_init(struct tcm_stack **stack_pp, size_t no_of_elements)
 
     if (!stack)
     {
-        TCM_ERR("Could not allocate memory for stack");
+        L_ERR("Could not allocate memory for stack");
         return -TCM_ERR_MEM;
     }
 
