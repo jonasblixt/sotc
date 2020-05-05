@@ -3,7 +3,9 @@
 #include <stdarg.h>
 #include "common.h"
 
-int tcm_debug(enum tcm_debug_level debug_level, const char *fmt, ...)
+int tcm_debug(enum tcm_debug_level debug_level,
+              const char *func_name,
+              const char *fmt, ...)
 {
     va_list args;
     int rc;
@@ -21,6 +23,7 @@ int tcm_debug(enum tcm_debug_level debug_level, const char *fmt, ...)
             printf("D ");
         break;
     }
+    printf("%s ", func_name);
     vprintf(fmt, args);
     printf("\n");
     va_end(args);

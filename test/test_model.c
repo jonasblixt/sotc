@@ -25,6 +25,19 @@ TEST(load_model)
     ASSERT_EQ(rc, TCM_OK);
 }
 
+TEST(load_empty_root)
+{
+    int rc;
+    struct tcm_model *model;
+
+    rc = tcm_model_load(TCM_TEST_SRC"test_empty_root.tcm", &model);
+    ASSERT_EQ(rc, TCM_OK);
+
+    printf("Model load %i\n", rc);
+
+    rc = tcm_model_free(model);
+    ASSERT_EQ(rc, TCM_OK);
+}
 
 TEST(create_model)
 {

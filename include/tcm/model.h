@@ -100,6 +100,7 @@ struct tcm_model
     json_object *jroot;
     struct tcm_region *root;
     const char *name;
+    int version;
 };
 
 int tcm_model_load(const char *filename, struct tcm_model **model);

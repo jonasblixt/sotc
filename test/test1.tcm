@@ -1,15 +1,10 @@
 {
-    "name": "pelle",
-    "region": [
-        {
-            "kind": "state",
-            "name": "A",
-            "region": [],
-        },
-        {
-            "kind": "state",
-            "name": "B",
-            "region": [],
-        },
-    ],
+    "kind": "TCM Model",
+    "version": 1,
+    "name": "test2",
+    "region": {
+        "name": "Root",
+        "states": [
+        ],
+    },
 }

@@ -2,25 +2,35 @@
     "kind": "TCM Model",
     "version": 1,
     "name": "test2",
-    "root": [
-        {
-            "kind": "state",
-            "name": "A",
-            "region": [],
-            "transition": [],
-        },
-        {
-            "kind": "state",
-            "name": "B",
-            "region": [
-                {
-                    "kind": "state",
-                    "name": "B1",
-                    "region": [],
-                    "transition": [],
-                },
-            ],
-            "transition": [],
-        },
-    ],
+    "region": {
+        "name": "Root",
+        "offpage": True,
+        "states": [
+            {
+                "kind": "state",
+                "name": "A",
+                "region": [],
+                "transition": [],
+            },
+            {
+                "kind": "state",
+                "name": "B",
+                "region": [
+                    {
+                        "name": "Some other region",
+                        "offpage": False,
+                        "states": [
+                            {
+                                "kind": "state",
+                                "name": "B1",
+                                "region": [],
+                                "transition": [],
+                            },
+                        ],
+                    },
+                ],
+                "transition": [],
+            },
+        ],
+    },
 }

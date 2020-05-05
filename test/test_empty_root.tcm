@@ -1,0 +1,7 @@
+{
+    "kind": "TCM Model",
+    "version": 1,
+    "name": "test_empty_root",
+    "region": {
+    },
+}

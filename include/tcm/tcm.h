@@ -9,6 +9,7 @@ enum tcm_errors
     TCM_ERROR,
     TCM_ERR_IO,
     TCM_ERR_MEM,
+    TCM_ERR_PARSE,
 };
 
 enum tcm_debug_level
@@ -19,18 +20,17 @@ enum tcm_debug_level
 };
 
 #define L_INFO(...) \
-         do { tcm_debug(1, __VA_ARGS__); } while (0)
+         do { tcm_debug(1, __func__, __VA_ARGS__); } while (0)
 
 #define L_DEBUG(...) \
-         do { tcm_debug(2, __VA_ARGS__); } while (0)
+         do { tcm_debug(2, __func__, __VA_ARGS__); } while (0)
 
 #define L_ERR(...) \
-         do { tcm_debug(0, __VA_ARGS__); } while (0)
+         do { tcm_debug(0, __func__, __VA_ARGS__); } while (0)
 
-typedef int (*tcm_debug_t)(enum tcm_debug_level debug_level, const char *fmt,
-                            va_list args);
+int tcm_debug(enum tcm_debug_level debug_level, const char *func_name,
+                    const char *fmt, ...);
 
-int tcm_debug(enum tcm_debug_level debug_level, const char *fmt, ...);
 const char *tcm_library_version(void);
 
 #endif  // INCLUDE_TCM_H_
