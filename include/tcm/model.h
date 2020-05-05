@@ -79,6 +79,7 @@ struct tcm_region
     struct tcm_state *state;
     struct tcm_transition *transition;
     struct tcm_state *parent_state;
+    struct tcm_state *last_state;
     struct tcm_region *next;
 };
 

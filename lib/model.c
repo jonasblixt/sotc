@@ -137,6 +137,8 @@ static int parse_region(struct tcm_model *model, json_object *j_region)
                 p_s->next = state;
             }
 
+            r->last_state = state;
+
             if (!json_object_object_get_ex(j_state, "name", &j_state_name))
             {
                 L_ERR("Missing name property, aborting");
@@ -144,7 +146,7 @@ static int parse_region(struct tcm_model *model, json_object *j_region)
                 goto err_parse_error;
             }
 
-            state->name = json_object_get_string(j_state_name);
+            state->name = strdup(json_object_get_string(j_state_name));
             state->parent_region = r;
 
             L_DEBUG("Loading state %s", state->name);
@@ -370,7 +372,36 @@ int tcm_model_create(struct tcm_model **model_pp, const char *name)
 
 int tcm_model_write(const char *filename, struct tcm_model *model)
 {
-    return -TCM_ERROR;
+    struct tcm_stack *stack;
+    struct tcm_state *s;
+    struct tcm_region *r, *r2;
+    int rc;
+
+    L_DEBUG("Write model to %s", filename);
+
+    rc = tcm_stack_init(&stack, 1024);
+
+    if (rc != TCM_OK)
+        return rc;
+
+    tcm_stack_push(stack, model->root);
+
+    while (tcm_stack_pop(stack, (void **) &r) == TCM_OK)
+    {
+        L_DEBUG("Found region %s", r->name);
+
+        for (s = r->state; s; s = s->next)
+        {
+            L_DEBUG("Found state %s", s->name);
+
+            /* Queue up sub-regions */
+            for (r2 = s->regions; r2; r2 = r2->next)
+                tcm_stack_push(stack, (void *) r2);
+        }
+    }
+
+    tcm_stack_free(stack);
+    return TCM_OK;
 }
 
 int tcm_model_free(struct tcm_model *model)
@@ -401,6 +432,7 @@ int tcm_model_free(struct tcm_model *model)
         {
             L_DEBUG("Found state <%p>", s);
             tcm_stack_push(free_stack, s);
+            free(s->name);
 
             for (r2 = s->regions; r2; r2 = r2->next)
             {
