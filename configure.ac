@@ -86,5 +86,5 @@ AC_CONFIG_FILES([Makefile
 
 dnl Dependencies build
 dnl AC_CONFIG_SUBDIRS([deps/dep1])
-
+AX_CODE_COVERAGE
 AC_OUTPUT
