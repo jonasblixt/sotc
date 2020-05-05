@@ -13,6 +13,7 @@ addons:
       - libglew-dev
       - libjson-c-dev
       - libglfw3-dev
+      - lcov
 script:
     - autoreconf -fi
     - ./configure --enable-code-coverage
