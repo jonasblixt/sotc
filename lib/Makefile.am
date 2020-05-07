@@ -3,7 +3,8 @@ lib_LTLIBRARIES = libtcm.la
 libtcm_la_SOURCES = tcm.c \
 					stack.c \
 					model.c \
-					state.c
+					state.c \
+					region.c
 
 libtcm_la_CFLAGS = -I$(top_srcdir)/include \
                      $(CODE_COVERAGE_CFLAGS) \
