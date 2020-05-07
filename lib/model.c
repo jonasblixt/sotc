@@ -70,11 +70,10 @@ static int parse_region(struct tcm_model *model, json_object *j_region)
     struct json_object *j_r = NULL;
     struct tcm_stack *stack;
     struct tcm_state *parent_state = NULL;
-    struct tcm_state *prev_state = NULL;
     struct tcm_state *state = NULL;
 
     /* Allocate temporary stack for parsing */
-    rc = tcm_stack_init(&stack, 1024);
+    rc = tcm_stack_init(&stack, TCM_MAX_R_S);
 
     if (rc != TCM_OK)
         return rc;
@@ -86,43 +85,19 @@ static int parse_region(struct tcm_model *model, json_object *j_region)
     {
         L_DEBUG("Parsing region");
 
-        r = malloc(sizeof(struct tcm_region));
+        rc = tcm_region_deserialize(j_r, state, &r);
+
+        if (rc != TCM_OK)
+        {
+            L_ERR("Could not de-serialize region");
+            goto err_parse_error;
+        }
+
+        tcm_state_append_region(state, r);
 
         if (!model->root)
         {
             model->root = r;
-        }
-
-        memset(r, 0, sizeof(*r));
-
-        if (!json_object_object_get_ex(j_r, "name", &jobj))
-        {
-            L_INFO("Could not read name property");
-            continue;
-        }
-
-        r->parent_state = state;
-        r->name = strdup(json_object_get_string(jobj));
-
-        if (state)
-        {
-            L_DEBUG("Belongs to %s", state->name);
-            /* Place region last in the list of regions for this state */
-            if (!state->regions)
-            {
-                state->regions = r;
-            }
-
-            if (!state->last_region)
-            {
-                state->last_region = r;
-            }
-            else
-            {
-                state->last_region->next = r;
-                state->last_region = r;
-            }
-
         }
 
         L_DEBUG("Initialized region: %s", r->name);
@@ -130,70 +105,39 @@ static int parse_region(struct tcm_model *model, json_object *j_region)
         if (!json_object_object_get_ex(j_r, "states", &jobj))
         {
             L_DEBUG("No states found in region");
+            continue;
         }
 
         size_t n_elements = json_object_array_length(jobj);
 
         L_DEBUG("Array elements = %zu", n_elements);
-        prev_state = NULL;
 
         /* Iterate over all states in region 'j_r' */
         for (int i = 0; i < n_elements; i++)
         {
             json_object *j_state = json_object_array_get_idx(jobj, i);
-            json_object *j_state_name;
-            json_object *j_state_regions;
+            json_object *j_state_regions = NULL;
+            struct tcm_state *new_state;
 
-            state = malloc(sizeof(struct tcm_state));
-            memset(state, 0 , sizeof(*state));
+            rc = tcm_state_deserialize(j_state, r, &new_state);
 
-            if (prev_state)
+            if (rc != TCM_OK)
             {
-                prev_state->next = state;
-            }
-
-
-            if (!r->state)
-            {
-                r->state = state;
-            }
-            else
-            {
-                struct tcm_state *p_s = r->state;
-
-                while (!p_s->next)
-                    p_s = p_s->next;
-
-                p_s->next = state;
-            }
-
-            r->last_state = state;
-
-            if (!json_object_object_get_ex(j_state, "name", &j_state_name))
-            {
-                L_ERR("Missing name property, aborting");
-                rc = -TCM_ERR_PARSE;
+                L_ERR("Could not de-serialize state");
                 goto err_parse_error;
             }
 
-            state->name = strdup(json_object_get_string(j_state_name));
-            state->parent_region = r;
-
-            L_DEBUG("Loading state %s", state->name);
+            tcm_region_append_state(r, new_state);
 
             if (!json_object_object_get_ex(j_state, "region", &j_state_regions))
             {
-                L_ERR("State '%s' no has regions", state->name);
+                L_ERR("State '%s' no has regions", new_state->name);
                 rc = -TCM_ERR_PARSE;
                 goto err_parse_error;
 
             }
 
-            if (prev_state)
-            {
-                L_DEBUG("Linking %s to %s", prev_state->name,
-                                            state->name);
-            }
+            L_DEBUG("Looking for regions in state '%s'", new_state->name);
 
             size_t n_regions = json_object_array_length(j_state_regions);
 
@@ -202,7 +146,7 @@ static int parse_region(struct tcm_model *model, json_object *j_region)
             {
                 L_DEBUG("Push jr_s_pair");
                 rc = push_jr_s_pair(stack,
-                        json_object_array_get_idx(j_state_regions, n), state);
+                     json_object_array_get_idx(j_state_regions, n), new_state);
 
                 if (rc != TCM_OK)
                 {
@@ -211,8 +155,6 @@ static int parse_region(struct tcm_model *model, json_object *j_region)
                     goto err_parse_error;
                 }
             }
-
-            prev_state = state;
         }
     }
 
@@ -409,15 +351,16 @@ int tcm_model_write(const char *filename, struct tcm_model *model)
     json_object *parent_j_state = NULL;
     json_object *current_j_region = NULL;
     json_object *root_j_region = NULL;
-    int rc;
+    int rc = TCM_OK;
 
     L_DEBUG("Write model to %s", filename);
 
-    rc = tcm_stack_init(&stack, 1024);
+    rc = tcm_stack_init(&stack, TCM_MAX_R_S);
 
     if (rc != TCM_OK)
         return rc;
 
+    /* Serialize the root region */
     rc = push_r_js_pair(stack, model->root, NULL);
 
     if (rc != TCM_OK)
@@ -453,7 +396,26 @@ int tcm_model_write(const char *filename, struct tcm_model *model)
 
     }
 
-    const char *output_string = json_object_to_json_string_ext(root_j_region,
+    if (rc != TCM_OK)
+    {
+        L_ERR("Serialization failed");
+        goto err_free_out;
+    }
+
+    /* Create the model root object */
+
+    json_object *jr = json_object_new_object();
+    json_object *jr_kind = json_object_new_string("TCM Model");
+    json_object *jr_version = json_object_new_int(model->version);
+    json_object *jr_name = json_object_new_string(model->name);
+
+    json_object_object_add(jr, "kind", jr_kind);
+    json_object_object_add(jr, "version", jr_version);
+    json_object_object_add(jr, "name", jr_name);
+    json_object_object_add(jr, "region", root_j_region);
+
+
+    const char *output_string = json_object_to_json_string_ext(jr,
                                                     JSON_C_TO_STRING_PRETTY);
 
     FILE *fp = fopen(filename, "w");
@@ -461,16 +423,26 @@ int tcm_model_write(const char *filename, struct tcm_model *model)
     if (!fp)
     {
         L_ERR("Could not open '%s' for writing", filename);
+        rc = -TCM_ERR_IO;
         goto err_free_out;
     }
 
-    fwrite(output_string, 1, strlen(output_string), fp);
+    size_t written_bytes = fwrite(output_string, 1, strlen(output_string), fp);
 
+    if (written_bytes != strlen(output_string))
+    {
+        L_ERR("Write error to '%s'", filename);
+        rc = -TCM_ERR_IO;
+        goto err_close_fp_out;
+    }
+
+    L_INFO("Successfuly wrote %zu bytes to '%s'", written_bytes, filename);
+err_close_fp_out:
     fclose(fp);
 err_free_out:
-    json_object_put(root_j_region);
+    json_object_put(jr);
     tcm_stack_free(stack);
-    return TCM_OK;
+    return rc;
 }
 
 int tcm_model_free(struct tcm_model *model)
@@ -480,12 +452,12 @@ int tcm_model_free(struct tcm_model *model)
     struct tcm_region *r, *r2;
     int rc;
 
-    rc = tcm_stack_init(&stack, 1024);
+    rc = tcm_stack_init(&stack, TCM_MAX_R_S);
 
     if (rc != TCM_OK)
         return rc;
 
-    rc = tcm_stack_init(&free_stack, 1024*1024);
+    rc = tcm_stack_init(&free_stack, TCM_MAX_OBJECTS);
 
     if (rc != TCM_OK)
         return rc;
@@ -503,13 +475,13 @@ int tcm_model_free(struct tcm_model *model)
 
         for (s = r->state; s; s = s->next)
         {
-            L_DEBUG("Found state <%p>", s);
+            L_DEBUG("Found state '%s'", s->name);
             tcm_stack_push(free_stack, s);
             free((void *) s->name);
 
             for (r2 = s->regions; r2; r2 = r2->next)
             {
-                L_DEBUG("Found region <%p>", r2);
+                L_DEBUG("Found region '%s'", r2->name);
                 tcm_stack_push(stack, (void *) r2);
             }
         }

@@ -3,6 +3,14 @@
 
 #include <stdarg.h>
 
+/* This sets the upper limit on how many regions a state can hold
+ * and how many states a region can hold */
+#define TCM_MAX_R_S 1024
+
+/* This sets the total amount of states and regions that can be 
+ * allocated */
+#define TCM_MAX_OBJECTS (1024*1024)
+
 enum tcm_errors
 {
     TCM_OK,

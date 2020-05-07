@@ -141,3 +141,23 @@ TEST(write_model)
     rc = tcm_model_free(model);
     ASSERT_EQ(rc, TCM_OK);
 }
+
+TEST(load_model3)
+{
+    int rc;
+    struct tcm_model *model;
+
+    rc = tcm_model_load("test_model_out.tcm", &model);
+    ASSERT_EQ(rc, TCM_OK);
+
+    printf("Model load %i\n", rc);
+
+    json_object_object_foreach(model->jroot, key, val)
+    {
+        printf("%s: %s\n", key, json_object_get_string(val));
+    }
+
+
+    rc = tcm_model_free(model);
+    ASSERT_EQ(rc, TCM_OK);
+}

@@ -33,6 +33,25 @@ int tcm_set_region_name(struct tcm_region *region, const char *name)
     return TCM_OK;
 }
 
+int tcm_region_append_state(struct tcm_region *r, struct tcm_state *state)
+{
+    if (!r->last_state)
+    {
+        r->last_state = state;
+    }
+
+    if (!r->state)
+    {
+        r->state = state;
+    }
+    else
+    {
+        r->last_state->next = state;
+        r->last_state = state;
+    }
+
+    return TCM_OK;
+}
 
 /* Translate the internal structure to json */
 int tcm_region_serialize(struct tcm_region *region, json_object *state,
@@ -64,7 +83,29 @@ int tcm_region_serialize(struct tcm_region *region, json_object *state,
 }
 
 /* Translate json representation to the internal structure */
-int tcm_region_deserialize(json_object *region, struct tcm_state *state)
+int tcm_region_deserialize(json_object *j_r, struct tcm_state *state,
+                            struct tcm_region **out)
 {
+    json_object *jobj;
+    struct tcm_region *r;
+
+    r = malloc(sizeof(struct tcm_region));
+    memset(r, 0, sizeof(*r));
+
+    (*out) = r;
+
+
+    if (!json_object_object_get_ex(j_r, "name", &jobj))
+    {
+        L_INFO("Could not read name property");
+        r->name = strdup("No name");
+    }
+    else
+    {
+        r->name = strdup(json_object_get_string(jobj));
+    }
+
+    r->parent_state = state;
+
     return TCM_OK;
 }

@@ -112,8 +112,14 @@ int tcm_add_region(struct tcm_state *state, bool off_page,
                      struct tcm_region **out);
 int tcm_set_region_name(struct tcm_region *region, const char *name);
 
+int tcm_region_append_state(struct tcm_region *r, struct tcm_state *state);
+
 int tcm_region_serialize(struct tcm_region *region, json_object *state,
                          json_object **out);
+
+int tcm_region_deserialize(json_object *j_r, struct tcm_state *state,
+                            struct tcm_region **out);
+
 /* State api */
 
 int tcm_add_state(struct tcm_region *region, const char *name,
@@ -131,10 +137,13 @@ int tcm_add_transition(struct tcm_transition **transition,
                        struct tcm_state *source,
                        struct tcm_state *dest);
 
+int tcm_state_append_region(struct tcm_state *state, struct tcm_region *r);
+
 int tcm_state_serialize(struct tcm_state *state, json_object *region,
                         json_object **out);
 
-int tcm_state_deserialize(json_object *state, struct tcm_region *region);
+int tcm_state_deserialize(json_object *j_state, struct tcm_region *region,
+                          struct tcm_state **out);
 
 const char * tcm_model_name(struct tcm_model *model);
 
