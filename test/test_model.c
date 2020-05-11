@@ -102,6 +102,26 @@ TEST(write_model)
     rc = tcm_add_region(c, false, &r1);
     ASSERT_EQ(rc, TCM_OK);
 
+    rc = tcm_region_set_size(r1, 100, 100);
+    ASSERT_EQ(rc, TCM_OK);
+
+    int x,y;
+    rc = tcm_region_get_size(r1, &x, &y);
+    ASSERT_EQ(rc, TCM_OK);
+    ASSERT_EQ(x, 100);
+    ASSERT_EQ(y, 100);
+
+    x = 123;
+    y = 321;
+    rc = tcm_region_set_xy(r1, x, y);
+    ASSERT_EQ(rc, TCM_OK);
+
+
+    rc = tcm_region_get_xy(r1, &x, &y);
+    ASSERT_EQ(rc, TCM_OK);
+    ASSERT_EQ(x, 123);
+    ASSERT_EQ(y, 321);
+
     rc = tcm_set_region_name(r1, "Another region");
     ASSERT_EQ(rc, TCM_OK);
 

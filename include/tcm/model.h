@@ -74,6 +74,8 @@ struct tcm_region
 {
     const char *name;
     bool off_page;
+    int x,y;
+    int width, height;
     struct tcm_state *state;
     struct tcm_transition *transition;
     struct tcm_state *parent_state;
@@ -119,6 +121,12 @@ int tcm_region_serialize(struct tcm_region *region, json_object *state,
 
 int tcm_region_deserialize(json_object *j_r, struct tcm_state *state,
                             struct tcm_region **out);
+
+int tcm_region_set_size(struct tcm_region *r, int x, int y);
+int tcm_region_set_xy(struct tcm_region *r, int x, int y);
+
+int tcm_region_get_size(struct tcm_region *r, int *x, int *y);
+int tcm_region_get_xy(struct tcm_region *r, int *x, int *y);
 
 /* State api */
 
