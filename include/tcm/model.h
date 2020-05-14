@@ -75,7 +75,8 @@ struct tcm_region
     const char *name;
     bool off_page;
     int x,y;
-    int width, height;
+    int w;
+    int h;
     struct tcm_state *state;
     struct tcm_transition *transition;
     struct tcm_state *parent_state;
@@ -86,6 +87,10 @@ struct tcm_region
 struct tcm_state
 {
     const char *name;
+    int x;
+    int y;
+    int w;
+    int h;
     enum tcm_state_kind kind;
     struct tcm_entry_exit *entries;
     struct tcm_doact *doacts;
@@ -152,6 +157,13 @@ int tcm_state_serialize(struct tcm_state *state, json_object *region,
 
 int tcm_state_deserialize(json_object *j_state, struct tcm_region *region,
                           struct tcm_state **out);
+
+
+int tcm_state_set_size(struct tcm_state *s, int x, int y);
+int tcm_state_set_xy(struct tcm_state *s, int x, int y);
+
+int tcm_state_get_size(struct tcm_state *s, int *x, int *y);
+int tcm_state_get_xy(struct tcm_state *s, int *x, int *y);
 
 const char * tcm_model_name(struct tcm_model *model);
 

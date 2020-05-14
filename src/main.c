@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <tcm/tcm.h>
+#include <tcm/model.h>
 #ifdef NANOVG_GLEW
 #    include <GL/glew.h>
 #endif
@@ -9,6 +11,8 @@
 #include <nanovg.h>
 #define NANOVG_GL3_IMPLEMENTATION
 #include <nanovg_gl.h>
+
+#include "render.h"
 
 static GLFWwindow* window;
 
@@ -45,6 +49,7 @@ static void window_size_callback(GLFWwindow* window, int width, int height)
 
 int main(int argc, char **argv)
 {
+    int rc;
     char banner[128];
     NVGcontext* vg = NULL;
 
@@ -87,6 +92,42 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    int font_bold =
+        nvgCreateFont(vg, "bold", "fonts/Hack Bold Nerd Font Complete.ttf");
+
+    if (font_bold == -1)
+    {
+        printf("Error: Could not load font\n");
+        return -1;
+    }
+
+    int font_italic =
+        nvgCreateFont(vg, "italic", "fonts/Hack Italic Nerd Font Complete.ttf");
+
+    if (font_italic == -1)
+    {
+        printf("Error: Could not load font\n");
+        return -1;
+    }
+
+    int font_regular =
+        nvgCreateFont(vg, "regular", "fonts/Hack Regular Nerd Font Complete.ttf");
+
+    if (font_regular == -1)
+    {
+        printf("Error: Could not load font\n");
+        return -1;
+    }
+    struct tcm_model *model;
+    rc = tcm_model_load(argv[1], &model);
+
+    if (rc != TCM_OK)
+    {
+        printf("Could not load model\n");
+        goto err_out;
+    }
+
+    tcm_render_init();
     glfwSwapInterval(0);
 
     /* Main render loop */
@@ -112,6 +153,7 @@ int main(int argc, char **argv)
 
         nvgBeginFrame(vg, winWidth, winHeight, pxRatio);
 
+        tcm_render(model->root, vg);
 
         nvgEndFrame(vg);
         glfwSwapBuffers(window);
@@ -119,7 +161,12 @@ int main(int argc, char **argv)
 
     }
 
+    printf("Clean-up...\n");
+    tcm_render_free();
+    tcm_model_free(model);
+
+err_out:
     nvgDeleteGL3(vg);
     glfwTerminate();
-    return 0;
+    return rc;
 }

@@ -111,16 +111,16 @@ TEST(write_model)
     ASSERT_EQ(x, 100);
     ASSERT_EQ(y, 100);
 
-    x = 123;
-    y = 321;
+    x = 223;
+    y = 221;
     rc = tcm_region_set_xy(r1, x, y);
     ASSERT_EQ(rc, TCM_OK);
 
 
     rc = tcm_region_get_xy(r1, &x, &y);
     ASSERT_EQ(rc, TCM_OK);
-    ASSERT_EQ(x, 123);
-    ASSERT_EQ(y, 321);
+    ASSERT_EQ(x, 223);
+    ASSERT_EQ(y, 221);
 
     rc = tcm_set_region_name(r1, "Another region");
     ASSERT_EQ(rc, TCM_OK);

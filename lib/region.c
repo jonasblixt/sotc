@@ -55,8 +55,8 @@ int tcm_region_append_state(struct tcm_region *r, struct tcm_state *state)
 
 int tcm_region_set_size(struct tcm_region *r, int x, int y)
 {
-    r->width = x;
-    r->height = y;
+    r->w = x;
+    r->h = y;
     return TCM_OK;
 }
 
@@ -69,8 +69,8 @@ int tcm_region_set_xy(struct tcm_region *r, int x, int y)
 
 int tcm_region_get_size(struct tcm_region *r, int *x, int *y)
 {
-    (*x) = r->width;
-    (*y) = r->height;
+    (*x) = r->w;
+    (*y) = r->h;
     return TCM_OK;
 }
 
@@ -93,10 +93,10 @@ int tcm_region_serialize(struct tcm_region *region, json_object *state,
     json_object_object_add(j_region, "name", j_name);
     json_object_object_add(j_region, "off_page", j_offpage);
     json_object_object_add(j_region, "width",
-                json_object_new_int(region->width));
+                json_object_new_int(region->w));
 
     json_object_object_add(j_region, "height",
-                json_object_new_int(region->height));
+                json_object_new_int(region->h));
 
     json_object_object_add(j_region, "x",
                 json_object_new_int(region->x));
@@ -155,14 +155,14 @@ int tcm_region_deserialize(json_object *j_r, struct tcm_state *state,
         r->y = json_object_get_int(jobj);
 
     if (!json_object_object_get_ex(j_r, "width", &jobj))
-        r->width = 0;
+        r->w = 0;
     else
-        r->width = json_object_get_int(jobj);
+        r->w = json_object_get_int(jobj);
 
     if (!json_object_object_get_ex(j_r, "height", &jobj))
-        r->height = 0;
+        r->h = 0;
     else
-        r->height = json_object_get_int(jobj);
+        r->h = json_object_get_int(jobj);
 
     r->parent_state = state;
 

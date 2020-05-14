@@ -1,16 +1,18 @@
 bin_PROGRAMS = tcm
 
 tcm_SOURCES = main.c \
-					   nanovg/nanovg.c
+			  render.c \
+			  nanovg/nanovg.c
 
 tcm_CFLAGS = -I$(top_srcdir)/include \
-					  -I$(top_srcdir)/src/nanovg \
-					  $(JSONC_CFLAGS) \
-					  $(GLFW_CFLAGS)
+			  -I$(top_srcdir)/src/nanovg \
+			  $(JSONC_CFLAGS) \
+			  $(GLFW_CFLAGS)
 
 tcm_LDFLAGS =
 
-tcm_LDADD = $(JSONC_LIBS) \
+tcm_LDADD = $(top_builddir)/lib/libtcm.la \
+			$(JSONC_LIBS) \
 			$(GLFW_LIBS)
 
 if OSX

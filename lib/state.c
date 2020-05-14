@@ -54,6 +54,34 @@ int tcm_state_append_region(struct tcm_state *state, struct tcm_region *r)
     return TCM_OK;
 }
 
+int tcm_state_set_size(struct tcm_state *s, int x, int y)
+{
+    s->w = x;
+    s->h = y;
+    return TCM_OK;
+}
+
+int tcm_state_set_xy(struct tcm_state *s, int x, int y)
+{
+    s->x = x;
+    s->y = y;
+    return TCM_OK;
+}
+
+int tcm_state_get_size(struct tcm_state *s, int *x, int *y)
+{
+    (*x) = s->w;
+    (*y) = s->h;
+    return TCM_OK;
+}
+
+int tcm_state_get_xy(struct tcm_state *s, int *x, int *y)
+{
+    (*x) = s->x;
+    (*y) = s->y;
+    return TCM_OK;
+}
+
 /* Translate the internal structure to json */
 int tcm_state_serialize(struct tcm_state *state, json_object *region,
                         json_object **out)
@@ -65,6 +93,18 @@ int tcm_state_serialize(struct tcm_state *state, json_object *region,
 
     json_object_object_add(j_state, "name", j_name);
     json_object_object_add(j_state, "kind", j_kind);
+
+    json_object_object_add(j_state, "width",
+                json_object_new_int(state->w));
+
+    json_object_object_add(j_state, "height",
+                json_object_new_int(state->h));
+
+    json_object_object_add(j_state, "x",
+                json_object_new_int(state->x));
+    json_object_object_add(j_state, "y",
+                json_object_new_int(state->y));
+
     json_object_object_add(j_state, "region", j_region);
 
     (*out) = j_state;
@@ -86,6 +126,7 @@ int tcm_state_deserialize(json_object *j_state, struct tcm_region *region,
     int rc = TCM_OK;
     struct tcm_state *state;
     json_object *j_state_name;
+    json_object *jobj;
 
     state = malloc(sizeof(struct tcm_state));
     memset(state, 0, sizeof(*state));
@@ -98,6 +139,26 @@ int tcm_state_deserialize(json_object *j_state, struct tcm_region *region,
         rc = -TCM_ERR_PARSE;
         goto err_out;
     }
+
+    if (!json_object_object_get_ex(j_state, "x", &jobj))
+        state->x = 0;
+    else
+        state->x = json_object_get_int(jobj);
+
+    if (!json_object_object_get_ex(j_state, "y", &jobj))
+        state->y = 0;
+    else
+        state->y = json_object_get_int(jobj);
+
+    if (!json_object_object_get_ex(j_state, "width", &jobj))
+        state->w = 0;
+    else
+        state->w = json_object_get_int(jobj);
+
+    if (!json_object_object_get_ex(j_state, "height", &jobj))
+        state->h = 0;
+    else
+        state->h = json_object_get_int(jobj);
 
     state->name = strdup(json_object_get_string(j_state_name));
     state->parent_region = region;
