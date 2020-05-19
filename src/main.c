@@ -1,51 +1,14 @@
 #include <stdio.h>
 #include <tcm/tcm.h>
 #include <tcm/model.h>
-#ifdef NANOVG_GLEW
-#    include <GL/glew.h>
-#endif
-#ifdef __APPLE__
-#    define GLFW_INCLUDE_GLCOREARB
-#endif
-#include <GLFW/glfw3.h>
+#include <SDL2/SDL.h>
 #include <nanovg.h>
-#define NANOVG_GL3_IMPLEMENTATION
-#include <nanovg_gl.h>
+
+#ifdef OSX
+#include <nanovg_mtl.h>
+#endif
 
 #include "render.h"
-
-static GLFWwindow* window;
-
-void errorcb(int error, const char* desc)
-{
-    printf("GLFW error %d: %s\n", error, desc);
-}
-
-static void key(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-}
-
-static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-{
-}
-
-
-static void mouse_button_callback(GLFWwindow* window, int button,
-                                        int action, int mods)
-{
-}
-
-static void cursor_position_callback(GLFWwindow* window,
-                                     double xpos,
-                                     double ypos)
-{
-}
-
-
-static void window_size_callback(GLFWwindow* window, int width, int height)
-{
-    printf("Window resize event: %u %u\n",width, height);
-}
 
 int main(int argc, char **argv)
 {
@@ -53,38 +16,23 @@ int main(int argc, char **argv)
     char banner[128];
     NVGcontext* vg = NULL;
 
+    SDL_Init(SDL_INIT_EVERYTHING);
 
-    if (!glfwInit())
-    {
-        printf("Failed to init GLFW.");
-        return -1;
-    }
+    SDL_Window* window = SDL_CreateWindow("Getting Started", SDL_WINDOWPOS_UNDEFINED,
+        SDL_WINDOWPOS_UNDEFINED, 800, 600, SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
+    SDL_Event input;
 
-    snprintf(banner, sizeof(banner), "The Credible Machine v%s", PACKAGE_VERSION);
+#ifdef OSX
+    vg = nvgCreateMTL(SDL_RenderGetMetalLayer(renderer),
+                        NVG_ANTIALIAS | NVG_STENCIL_STROKES);
+#endif
+ //   vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES | NVG_DEBUG);
+    SDL_RendererInfo *rend_info = (SDL_RendererInfo *) malloc(sizeof(SDL_RendererInfo));
+            SDL_GetRendererInfo(renderer, rend_info);
 
-    glfwSetErrorCallback(errorcb);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
+    printf("SDL Renderer: %s\n", rend_info->name);
 
-    window = glfwCreateWindow(1000, 600, banner, NULL, NULL);
-
-    if (!window)
-    {
-        glfwTerminate();
-        return -1;
-    }
-
-    glfwSetKeyCallback(window, key);
-    glfwSetMouseButtonCallback(window, mouse_button_callback);
-    glfwSetScrollCallback(window, scroll_callback);
-    glfwSetCursorPosCallback(window, cursor_position_callback);
-    glfwSetWindowSizeCallback(window, window_size_callback);
-    glfwMakeContextCurrent(window);
-
-    vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES | NVG_DEBUG);
 
     if (vg == NULL)
     {
@@ -128,37 +76,42 @@ int main(int argc, char **argv)
     }
 
     tcm_render_init();
-    glfwSwapInterval(0);
 
     /* Main render loop */
-    while (!glfwWindowShouldClose(window))
+    bool quit = false;
+
+    while (!quit)
     {
-        double mx, my, t;
-        int winWidth, winHeight;
-        int fbWidth, fbHeight;
-        float pxRatio;
+ /*       SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+        SDL_RenderClear(renderer);
 
-        t = glfwGetTime();
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+*/
 
-        glfwGetCursorPos(window, &mx, &my);
-        glfwGetWindowSize(window, &winWidth, &winHeight);
-        glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
-        // Calculate pixel ration for hi-dpi devices.
-        pxRatio = (float)fbWidth / (float)winWidth;
-
-        // Update and render
-        glViewport(0, 0, fbWidth, fbHeight);
-        glClearColor(1.0f, 1.0f, 1.02f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
-
-        nvgBeginFrame(vg, winWidth, winHeight, pxRatio);
-
+        nvgBeginFrame(vg, 800, 600, 1.0);
         tcm_render(model->root, vg);
 
+	nvgSave(vg);
+	nvgBeginPath(vg);
+	nvgRoundedRect(vg, 10, 10, 300, 300, 0);
+	nvgStrokeColor(vg, nvgRGBA(50, 50, 50, 255));
+    nvgStrokeWidth(vg, 0.5);
+	nvgStroke(vg);
+	nvgRestore(vg);
         nvgEndFrame(vg);
-        glfwSwapBuffers(window);
-        glfwWaitEventsTimeout(0.5);
 
+/*
+        SDL_RenderDrawLine(renderer, 10, 10, 200, 200);
+        SDL_RenderPresent(renderer);
+*/
+        while (SDL_PollEvent(&input) > 0)
+        {
+            printf("Input ev: %i\n", input.type);
+
+            if (input.type == SDL_QUIT) 
+                quit = true;
+
+        }
     }
 
     printf("Clean-up...\n");
@@ -166,7 +119,8 @@ int main(int argc, char **argv)
     tcm_model_free(model);
 
 err_out:
-    nvgDeleteGL3(vg);
-    glfwTerminate();
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
     return rc;
 }

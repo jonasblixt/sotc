@@ -30,12 +30,6 @@ AC_SUBST(JSONC_CFLAGS)
 AC_SUBST(JSONC_LDFLAGS)
 AC_SUBST(JSONC_LIBS)
 
-
-PKG_CHECK_MODULES(GLFW, [glfw3 >= 3.2.0])
-AC_SUBST(GLFW_CFLAGS)
-AC_SUBST(GLFW_LDFLAGS)
-AC_SUBST(GLFW_LIBS)
-
 AC_CANONICAL_HOST
 
 build_linux=no
@@ -55,6 +49,7 @@ case "${host_os}" in
     darwin*)
         build_mac=yes
         AC_DEFINE([OSX], 1, "Mac build")
+        AC_PROG_OBJC
         ;;
     *)
         AC_MSG_ERROR(["OS $host_os is not supported"])
@@ -66,17 +61,10 @@ AM_CONDITIONAL([LINUX], [test "$build_linux" = "yes"])
 AM_CONDITIONAL([WINDOWS], [test "$build_windows" = "yes"])
 AM_CONDITIONAL([OSX], [test "$build_mac" = "yes"])
 
-AM_COND_IF([LINUX],
-           [PKG_CHECK_MODULES(GL, [gl >= 19.0.0])
-            AC_SUBST(GL_CFLAGS)
-            AC_SUBST(GL_LDFLAGS)
-            AC_SUBST(GL_LIBS)])
-
-AM_COND_IF([LINUX],
-           [PKG_CHECK_MODULES(GLEW, [glew >= 2.0.0])
-            AC_SUBST(GLEW_CFLAGS)
-            AC_SUBST(GLEW_LDFLAGS)
-            AC_SUBST(GLEW_LIBS)])
+PKG_CHECK_MODULES(SDL, [sdl2 >= 2.0.0])
+            AC_SUBST(SDL_CFLAGS)
+            AC_SUBST(SDL_LDFLAGS)
+            AC_SUBST(SDL_LIBS)
 
 AC_CONFIG_FILES([Makefile
                 lib/Makefile
