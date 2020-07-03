@@ -30,6 +30,16 @@ AC_SUBST(JSONC_CFLAGS)
 AC_SUBST(JSONC_LDFLAGS)
 AC_SUBST(JSONC_LIBS)
 
+PKG_CHECK_MODULES(GTK, [gtk+-3.0 >= 3.20.0])
+AC_SUBST(GTK_CFLAGS)
+AC_SUBST(GTK_LDFLAGS)
+AC_SUBST(GTK_LIBS)
+
+PKG_CHECK_MODULES(CAIRO, [cairo >= 1.14.0])
+AC_SUBST(CAIRO_CFLAGS)
+AC_SUBST(CAIRO_LDFLAGS)
+AC_SUBST(CAIRO_LIBS)
+
 AC_CANONICAL_HOST
 
 build_linux=no
@@ -60,16 +70,10 @@ AM_CONDITIONAL([LINUX], [test "$build_linux" = "yes"])
 AM_CONDITIONAL([WINDOWS], [test "$build_windows" = "yes"])
 AM_CONDITIONAL([OSX], [test "$build_mac" = "yes"])
 
-PKG_CHECK_MODULES(SDL, [sdl2 >= 2.0.0])
-            AC_SUBST(SDL_CFLAGS)
-            AC_SUBST(SDL_LDFLAGS)
-            AC_SUBST(SDL_LIBS)
-
 AC_CONFIG_FILES([Makefile
                 lib/Makefile
                 src/Makefile
                 test/Makefile])
-
 
 dnl Dependencies build
 dnl AC_CONFIG_SUBDIRS([deps/dep1])
