@@ -1,7 +1,7 @@
-.. image:: https://codecov.io/gh/jonasblixt/tcm/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/jonasblixt/tcm
-.. image:: https://travis-ci.org/jonasblixt/tcm.svg?branch=master
-    :target: https://travis-ci.org/jonasblixt/tcm
+.. image:: https://codecov.io/gh/jonasblixt/sotc/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/jonasblixt/sotc
+.. image:: https://travis-ci.org/jonasblixt/sotc.svg?branch=master
+    :target: https://travis-ci.org/jonasblixt/sotc
 
-# The Credible Machine
-A statechart drawing tool
+# State of the chart
+A state chart drawing tool
