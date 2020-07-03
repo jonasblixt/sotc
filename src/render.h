@@ -1,15 +1,13 @@
 #ifndef RENDER_H_
 #define RENDER_H_
 
-#include <tcm/tcm.h>
-#include <tcm/model.h>
-#include <nanovg.h>
+#include <sotc/sotc.h>
+#include <sotc/model.h>
 
-int tcm_render(struct tcm_region *region,
-               NVGcontext* vg);
+int sotc_render(struct sotc_region *region);
 
-int tcm_render_init(void);
+int sotc_render_init(void);
 
-int tcm_render_free(void);
+int sotc_render_free(void);
 
 #endif  // RENDER_H_

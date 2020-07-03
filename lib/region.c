@@ -1,17 +1,17 @@
 #include <stdio.h>
 #include <string.h>
-#include <tcm/tcm.h>
-#include <tcm/model.h>
+#include <sotc/sotc.h>
+#include <sotc/model.h>
 #include <json.h>
 
 
-int tcm_add_region(struct tcm_state *state, bool off_page,
-                     struct tcm_region **out)
+int sotc_add_region(struct sotc_state *state, bool off_page,
+                     struct sotc_region **out)
 {
-    struct tcm_region *region = malloc(sizeof(struct tcm_region));
+    struct sotc_region *region = malloc(sizeof(struct sotc_region));
 
     if (!region)
-        return -TCM_ERR_MEM;
+        return -SOTC_ERR_MEM;
 
     memset(region, 0, sizeof(*region));
 
@@ -24,16 +24,16 @@ int tcm_add_region(struct tcm_state *state, bool off_page,
 
     state->last_region = region;
 
-    return TCM_OK;
+    return SOTC_OK;
 }
 
-int tcm_set_region_name(struct tcm_region *region, const char *name)
+int sotc_set_region_name(struct sotc_region *region, const char *name)
 {
     region->name = strdup(name);
-    return TCM_OK;
+    return SOTC_OK;
 }
 
-int tcm_region_append_state(struct tcm_region *r, struct tcm_state *state)
+int sotc_region_append_state(struct sotc_region *r, struct sotc_state *state)
 {
     if (!r->last_state)
     {
@@ -50,39 +50,39 @@ int tcm_region_append_state(struct tcm_region *r, struct tcm_state *state)
         r->last_state = state;
     }
 
-    return TCM_OK;
+    return SOTC_OK;
 }
 
-int tcm_region_set_size(struct tcm_region *r, int x, int y)
+int sotc_region_set_size(struct sotc_region *r, int x, int y)
 {
     r->w = x;
     r->h = y;
-    return TCM_OK;
+    return SOTC_OK;
 }
 
-int tcm_region_set_xy(struct tcm_region *r, int x, int y)
+int sotc_region_set_xy(struct sotc_region *r, int x, int y)
 {
     r->x = x;
     r->y = y;
-    return TCM_OK;
+    return SOTC_OK;
 }
 
-int tcm_region_get_size(struct tcm_region *r, int *x, int *y)
+int sotc_region_get_size(struct sotc_region *r, int *x, int *y)
 {
     (*x) = r->w;
     (*y) = r->h;
-    return TCM_OK;
+    return SOTC_OK;
 }
 
-int tcm_region_get_xy(struct tcm_region *r, int *x, int *y)
+int sotc_region_get_xy(struct sotc_region *r, int *x, int *y)
 {
     (*x) = r->x;
     (*y) = r->y;
-    return TCM_OK;
+    return SOTC_OK;
 }
 
 /* Translate the internal structure to json */
-int tcm_region_serialize(struct tcm_region *region, json_object *state,
+int sotc_region_serialize(struct sotc_region *region, json_object *state,
                          json_object **out)
 {
     json_object *j_region = json_object_new_object();
@@ -111,24 +111,24 @@ int tcm_region_serialize(struct tcm_region *region, json_object *state,
         json_object *j_state_region_array;
 
         if (!json_object_object_get_ex(state, "region", &j_state_region_array))
-            return -TCM_ERROR;
+            return -SOTC_ERROR;
 
         json_object_array_add(j_state_region_array, j_region);
     }
 
     (*out) = j_region;
 
-    return TCM_OK;
+    return SOTC_OK;
 }
 
 /* Translate json representation to the internal structure */
-int tcm_region_deserialize(json_object *j_r, struct tcm_state *state,
-                            struct tcm_region **out)
+int sotc_region_deserialize(json_object *j_r, struct sotc_state *state,
+                            struct sotc_region **out)
 {
     json_object *jobj;
-    struct tcm_region *r;
+    struct sotc_region *r;
 
-    r = malloc(sizeof(struct tcm_region));
+    r = malloc(sizeof(struct sotc_region));
     memset(r, 0, sizeof(*r));
 
     (*out) = r;
@@ -166,5 +166,5 @@ int tcm_region_deserialize(json_object *j_r, struct tcm_state *state,
 
     r->parent_state = state;
 
-    return TCM_OK;
+    return SOTC_OK;
 }

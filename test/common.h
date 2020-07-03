@@ -3,6 +3,6 @@
 
 #include <stdarg.h>
 
-int tcm_test_debug(int debug_level, const char *fmt, va_list args);
+int sotc_test_debug(int debug_level, const char *fmt, va_list args);
 
 #endif

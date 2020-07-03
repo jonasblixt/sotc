@@ -3,12 +3,12 @@ COMMON_TEST_CFLAGS = -I $(top_srcdir)/include \
                      -I $(top_srcdir)/lib \
                      -fsanitize=address \
 					 $(JSONC_CFLAGS) \
-					 -DTCM_TEST_SRC=\"$(abs_top_srcdir)/test/\" \
+					 -DSOTC_TEST_SRC=\"$(abs_top_srcdir)/test/\" \
 					 -g -O0 \
 					 -fno-omit-frame-pointer
 
 COMMON_TEST_LDADD = libnala.la \
-					$(top_builddir)/lib/libtcm.la \
+					$(top_builddir)/lib/libsotc.la \
 					$(JSONC_LIBS)
 
 check_LTLIBRARIES = libnala.la

@@ -1,7 +1,7 @@
-dnl State Blaster
+dnl State of the Chart
 
 AC_PREREQ(2.59)
-AC_INIT([tcm], [0.1.0], [Jonas Blixt, <jonpe960@gmail.com>])
+AC_INIT([sotc], [0.1.0], [Jonas Blixt, <jonpe960@gmail.com>])
 
 m4_pattern_forbid([^AX_(CHECK_ENABLE_DEBUG|CODE_COVERAGE|COMPILER_FLAGS|COMPILER_FLAGS_(CFLAGS|CXXFLAGS|LDFLAGS))\b],
   [Unexpanded AX_ macro found. Please install GNU autoconf-archive])
@@ -49,7 +49,6 @@ case "${host_os}" in
     darwin*)
         build_mac=yes
         AC_DEFINE([OSX], 1, "Mac build")
-        AC_PROG_OBJC
         ;;
     *)
         AC_MSG_ERROR(["OS $host_os is not supported"])

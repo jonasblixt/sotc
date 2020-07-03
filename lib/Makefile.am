@@ -1,14 +1,14 @@
-lib_LTLIBRARIES = libtcm.la
+lib_LTLIBRARIES = libsotc.la
 
-libtcm_la_SOURCES = tcm.c \
+libsotc_la_SOURCES = sotc.c \
 					stack.c \
 					model.c \
 					state.c \
 					region.c
 
-libtcm_la_CFLAGS = -I$(top_srcdir)/include \
+libsotc_la_CFLAGS = -I$(top_srcdir)/include \
                      $(CODE_COVERAGE_CFLAGS) \
 					 $(JSONC_CFLAGS)
 
-libtcm_la_LIBS = $(JSONC_LIBS) \
+libsotc_la_LIBS = $(JSONC_LIBS) \
 				 $(CODE_COVERAGE_LIBS)

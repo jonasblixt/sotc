@@ -1,13 +1,13 @@
 #include <stdio.h>
-#include <tcm/tcm.h>
-#include <tcm/model.h>
-#include <tcm/stack.h>
+#include <sotc/tcm.h>
+#include <sotc/model.h>
+#include <sotc/stack.h>
 
 #include "render.h"
 
-static struct tcm_stack *stack;
+static struct sotc_stack *stack;
 
-static int render_region(NVGcontext *vg, struct tcm_region *region)
+static int render_region(NVGcontext *vg, struct sotc_region *region)
 {
 	nvgSave(vg);
 	nvgBeginPath(vg);
@@ -19,7 +19,7 @@ static int render_region(NVGcontext *vg, struct tcm_region *region)
     return 0;
 }
 
-static int render_state(NVGcontext* vg, struct tcm_state *state)
+static int render_state(NVGcontext* vg, struct sotc_state *state)
 {
 	float cornerRadius = 10.0f;
 
@@ -80,35 +80,35 @@ static int render_state(NVGcontext* vg, struct tcm_state *state)
     }
 #endif
 	nvgRestore(vg);
-    return TCM_OK;
+    return sotc_OK;
 }
 
-int tcm_render_init(void)
+int sotc_render_init(void)
 {
     int rc;
 
-    rc = tcm_stack_init(&stack, TCM_MAX_R_S);
+    rc = sotc_stack_init(&stack, sotc_MAX_R_S);
 
-    if (rc != TCM_OK)
+    if (rc != sotc_OK)
         return rc;
 
-    return TCM_OK;
+    return sotc_OK;
 }
 
-int tcm_render_free(void)
+int sotc_render_free(void)
 {
-    tcm_stack_free(stack);
-    return TCM_OK;
+    sotc_stack_free(stack);
+    return sotc_OK;
 }
 
-int tcm_render(struct tcm_region *region, NVGcontext* vg)
+int sotc_render(struct sotc_region *region, NVGcontext* vg)
 {
-    struct tcm_region *r, *r2;
-    struct tcm_state *s;
+    struct sotc_region *r, *r2;
+    struct sotc_state *s;
 
-    tcm_stack_push(stack, region);
+    sotc_stack_push(stack, region);
 
-    while (tcm_stack_pop(stack, (void **) &r) == TCM_OK)
+    while (sotc_stack_pop(stack, (void **) &r) == sotc_OK)
     {
         printf("R %s <%i, %i, %i, %i>\n", r->name, r->x, r->y, r->w, r->h);
         render_region(vg, r);
@@ -120,10 +120,10 @@ int tcm_render(struct tcm_region *region, NVGcontext* vg)
 
             for (r2 = s->regions; r2; r2 = r2->next)
             {
-                tcm_stack_push(stack, (void *) r2);
+                sotc_stack_push(stack, (void *) r2);
             }
         }
     }
 
-    return TCM_OK;
+    return sotc_OK;
 }

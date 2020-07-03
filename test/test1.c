@@ -1,22 +1,22 @@
 #include <string.h>
-#include <tcm/tcm.h>
-#include <tcm/model.h>
+#include <sotc/sotc.h>
+#include <sotc/model.h>
 #include <json.h>
 #include "nala.h"
 #include "common.h"
 
 TEST(version)
 {
-    printf("TCM Library version: %s\n", tcm_library_version());
+    printf("SOTC Library version: %s\n", sotc_library_version());
 }
 
 TEST(load_model)
 {
     int rc;
-    struct tcm_model *model;
+    struct sotc_model *model;
 
-    rc = tcm_model_load(TCM_TEST_SRC"test1.tcm", &model);
-    ASSERT_EQ(rc, TCM_OK);
+    rc = sotc_model_load(SOTC_TEST_SRC"test1.sotc", &model);
+    ASSERT_EQ(rc, SOTC_OK);
 
     printf("Model load %i\n", rc);
 
@@ -26,6 +26,6 @@ TEST(load_model)
     }
 
 
-    rc = tcm_model_free(model);
-    ASSERT_EQ(rc, TCM_OK);
+    rc = sotc_model_free(model);
+    ASSERT_EQ(rc, SOTC_OK);
 }

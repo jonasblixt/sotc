@@ -1,17 +1,17 @@
 #include <stdio.h>
 #include <string.h>
-#include <tcm/tcm.h>
-#include <tcm/model.h>
+#include <sotc/sotc.h>
+#include <sotc/model.h>
 #include <json.h>
 
 
-int tcm_add_state(struct tcm_region *region, const char *name,
-                    struct tcm_state **out)
+int sotc_add_state(struct sotc_region *region, const char *name,
+                    struct sotc_state **out)
 {
-    struct tcm_state *state = malloc(sizeof(struct tcm_state));
+    struct sotc_state *state = malloc(sizeof(struct sotc_state));
 
     if (!state)
-        return -TCM_ERR_MEM;
+        return -SOTC_ERR_MEM;
 
     memset(state, 0, sizeof(*state));
 
@@ -26,10 +26,10 @@ int tcm_add_state(struct tcm_region *region, const char *name,
 
     region->last_state = state;
 
-    return TCM_OK;
+    return SOTC_OK;
 }
 
-int tcm_state_append_region(struct tcm_state *state, struct tcm_region *r)
+int sotc_state_append_region(struct sotc_state *state, struct sotc_region *r)
 {
     if (state)
     {
@@ -51,39 +51,39 @@ int tcm_state_append_region(struct tcm_state *state, struct tcm_region *r)
         }
     }
 
-    return TCM_OK;
+    return SOTC_OK;
 }
 
-int tcm_state_set_size(struct tcm_state *s, int x, int y)
+int sotc_state_set_size(struct sotc_state *s, int x, int y)
 {
     s->w = x;
     s->h = y;
-    return TCM_OK;
+    return SOTC_OK;
 }
 
-int tcm_state_set_xy(struct tcm_state *s, int x, int y)
+int sotc_state_set_xy(struct sotc_state *s, int x, int y)
 {
     s->x = x;
     s->y = y;
-    return TCM_OK;
+    return SOTC_OK;
 }
 
-int tcm_state_get_size(struct tcm_state *s, int *x, int *y)
+int sotc_state_get_size(struct sotc_state *s, int *x, int *y)
 {
     (*x) = s->w;
     (*y) = s->h;
-    return TCM_OK;
+    return SOTC_OK;
 }
 
-int tcm_state_get_xy(struct tcm_state *s, int *x, int *y)
+int sotc_state_get_xy(struct sotc_state *s, int *x, int *y)
 {
     (*x) = s->x;
     (*y) = s->y;
-    return TCM_OK;
+    return SOTC_OK;
 }
 
 /* Translate the internal structure to json */
-int tcm_state_serialize(struct tcm_state *state, json_object *region,
+int sotc_state_serialize(struct sotc_state *state, json_object *region,
                         json_object **out)
 {
     json_object *j_state = json_object_new_object();
@@ -112,23 +112,23 @@ int tcm_state_serialize(struct tcm_state *state, json_object *region,
     json_object *j_region_state_array;
 
     if (!json_object_object_get_ex(region, "states", &j_region_state_array))
-        return -TCM_ERROR;
+        return -SOTC_ERROR;
 
     json_object_array_add(j_region_state_array, j_state);
 
-    return TCM_OK;
+    return SOTC_OK;
 }
 
 /* Translate json representation to the internal structure */
-int tcm_state_deserialize(json_object *j_state, struct tcm_region *region,
-                          struct tcm_state **out)
+int sotc_state_deserialize(json_object *j_state, struct sotc_region *region,
+                          struct sotc_state **out)
 {
-    int rc = TCM_OK;
-    struct tcm_state *state;
+    int rc = SOTC_OK;
+    struct sotc_state *state;
     json_object *j_state_name;
     json_object *jobj;
 
-    state = malloc(sizeof(struct tcm_state));
+    state = malloc(sizeof(struct sotc_state));
     memset(state, 0, sizeof(*state));
 
     (*out) = state;
@@ -136,7 +136,7 @@ int tcm_state_deserialize(json_object *j_state, struct tcm_region *region,
     if (!json_object_object_get_ex(j_state, "name", &j_state_name))
     {
         L_ERR("Missing name property, aborting");
-        rc = -TCM_ERR_PARSE;
+        rc = -SOTC_ERR_PARSE;
         goto err_out;
     }
 

@@ -1,27 +1,13 @@
-bin_PROGRAMS = tcm
+bin_PROGRAMS = sotc
 
-tcm_SOURCES = main.c \
-			  render.c \
-			  nanovg/nanovg.c
+sotc_SOURCES = main.c
 
-if OSX
-tcm_SOURCES += nanovg/nanovg_mtl.m
-endif
 
-tcm_CFLAGS = -I$(top_srcdir)/include \
-			  -I$(top_srcdir)/src/nanovg \
-			  $(JSONC_CFLAGS) \
-			  $(SDL_CFLAGS)
+sotc_CFLAGS = -I$(top_srcdir)/include \
+			  $(JSONC_CFLAGS)
 
-tcm_LDFLAGS =
+sotc_LDFLAGS =
 
-if OSX
-tcm_LDFLAGS += -framework Metal
-tcm_LDFLAGS += -framework QuartzCore 
-tcm_LDFLAGS += -framework CoreFoundation
-endif
-
-tcm_LDADD = $(top_builddir)/lib/libtcm.la \
-			$(JSONC_LIBS) \
-			$(SDL_LIBS)
+sotc_LDADD = $(top_builddir)/lib/libsotc.la \
+			$(JSONC_LIBS)
 

@@ -1,9 +1,9 @@
 #include <stdio.h>
-#include <tcm/tcm.h>
+#include <sotc/sotc.h>
 #include <stdarg.h>
 #include "common.h"
 
-int tcm_debug(enum tcm_debug_level debug_level,
+int sotc_debug(enum sotc_debug_level debug_level,
               const char *func_name,
               const char *fmt, ...)
 {
