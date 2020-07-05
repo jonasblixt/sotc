@@ -75,6 +75,7 @@ int main(int argc, char **argv)
         goto err_out;
     }
 
+    sotc_object_tree_update(model);
 
 
     gtk_widget_show_all(window);

@@ -6,5 +6,6 @@
 
 int sotc_object_tree_init(GtkWidget **widget);
 int sotc_object_tree_free(GtkWidget *widget);
+int sotc_object_tree_update(struct sotc_model *model);
 
 #endif  // OBJECT_TREE_H_
