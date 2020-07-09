@@ -9,8 +9,6 @@ static void paint (GtkWidget *widget, GdkEventExpose *eev, gpointer data)
     cairo_t *cr;
     GtkAllocation allocation;
 
-    printf("paint called!\n");
-
     gtk_widget_get_allocation(widget, &allocation);
 
     width = allocation.width;

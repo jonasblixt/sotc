@@ -6,6 +6,8 @@ sotc_SOURCES = main.c \
 
 
 sotc_CFLAGS = -I$(top_srcdir)/include \
+			  -DGTK_DISABLE_DEPRECATED \
+			  -DGLIB_DISABLE_DEPRECATED \
 			  $(JSONC_CFLAGS) \
 			  $(GTK_CFLAGS) \
 			  $(CAIRO_CFLAGS)
