@@ -77,6 +77,7 @@ struct sotc_region
     int x,y;
     int w;
     int h;
+    bool focus;
     struct sotc_state *state;
     struct sotc_transition *transition;
     struct sotc_state *parent_state;
@@ -91,6 +92,7 @@ struct sotc_state
     int y;
     int w;
     int h;
+    bool focus;
     enum sotc_state_kind kind;
     struct sotc_entry_exit *entries;
     struct sotc_doact *doacts;

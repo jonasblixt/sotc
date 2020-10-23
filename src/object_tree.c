@@ -6,11 +6,14 @@
 
 enum
 {
-    COL_TEXT = 0,
+    COL_ICON,
+    COL_TEXT,
     NUM_COLS
 };
 
 static GtkTreeStore *store;
+static GdkPixbuf *state_icon;
+static GdkPixbuf *region_icon;
 
 int sotc_object_tree_init(GtkWidget **widget)
 {
@@ -19,21 +22,43 @@ int sotc_object_tree_init(GtkWidget **widget)
     GtkCellRenderer *renderer;
     int rc;
 
-    store = gtk_tree_store_new(NUM_COLS, G_TYPE_STRING, G_TYPE_STRING);
+    store = gtk_tree_store_new(NUM_COLS, GDK_TYPE_PIXBUF, G_TYPE_STRING);
     tree = (GtkTreeView *) gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
 
     gtk_tree_view_set_show_expanders(tree, TRUE);
     gtk_tree_view_set_headers_visible(tree, FALSE);
     gtk_tree_view_set_enable_tree_lines(tree, TRUE);
+    gtk_tree_view_set_enable_search(tree, FALSE);
 
     g_object_unref(G_OBJECT(store));
-
+/*
     renderer = gtk_cell_renderer_text_new();
     column = gtk_tree_view_column_new_with_attributes("Object tree", renderer,
+                                                      "pixbuf", COL_ICON,
                                                       "text", COL_TEXT,
                                                       NULL);
+*/
+
+    column = gtk_tree_view_column_new();
+    gtk_tree_view_column_set_title(column, "Title");
+
+    renderer = gtk_cell_renderer_pixbuf_new();
+    gtk_tree_view_column_pack_start(column, renderer, FALSE);
+    gtk_tree_view_column_set_attributes(column, renderer,
+                                        "pixbuf", COL_ICON,
+                                        NULL);
+
+    renderer = gtk_cell_renderer_text_new();
+    gtk_tree_view_column_pack_start(column, renderer, TRUE);
+    gtk_tree_view_column_set_attributes(column, renderer,
+                                        "text", COL_TEXT,
+                                        NULL);
 
     gtk_tree_view_append_column(GTK_TREE_VIEW(tree), column);
+
+    GError *error = NULL;
+    state_icon = gdk_pixbuf_new_from_file("state.svg", &error);
+    region_icon = gdk_pixbuf_new_from_file("region.svg", &error);
 
     (*widget) = (GtkWidget *) tree;
 
@@ -84,7 +109,6 @@ int sotc_object_tree_update(struct sotc_model *model)
     GtkTreeIter r_iter;
     GtkTreeIter *parent = NULL;
 
-    gchar *icon_test = "battery-caution-charging-symbolic";
     rc = sotc_stack_init(&cleanup_stack, SOTC_MAX_R_S);
 
     if (rc != SOTC_OK)
@@ -102,8 +126,9 @@ int sotc_object_tree_update(struct sotc_model *model)
         printf("R %s <%i, %i, %i, %i>\n", r->name, r->x, r->y, r->w, r->h);
 
         gtk_tree_store_append(store, &r_iter, parent);
-        gtk_tree_store_set(store, &r_iter, COL_TEXT, r->name,
-                                           -1);
+
+        gtk_tree_store_set(store, &r_iter, COL_ICON, region_icon, -1);
+        gtk_tree_store_set(store, &r_iter, COL_TEXT, r->name, -1);
 
         for (s = r->state; s; s = s->next)
         {
@@ -113,8 +138,8 @@ int sotc_object_tree_update(struct sotc_model *model)
             sotc_stack_push(cleanup_stack, (void *) s_iter);
 
             gtk_tree_store_append(store, s_iter, &r_iter);
-            gtk_tree_store_set(store, s_iter, COL_TEXT, s->name,
-                                              -1);
+            gtk_tree_store_set(store, s_iter, COL_ICON, state_icon, -1);
+            gtk_tree_store_set(store, s_iter, COL_TEXT, s->name, -1);
 
             for (r2 = s->regions; r2; r2 = r2->next)
             {
