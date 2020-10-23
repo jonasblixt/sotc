@@ -74,9 +74,7 @@ struct sotc_region
 {
     const char *name;
     bool off_page;
-    int x,y;
-    int w;
-    int h;
+    double h;
     bool focus;
     struct sotc_state *state;
     struct sotc_transition *transition;
@@ -129,11 +127,8 @@ int sotc_region_serialize(struct sotc_region *region, json_object *state,
 int sotc_region_deserialize(json_object *j_r, struct sotc_state *state,
                             struct sotc_region **out);
 
-int sotc_region_set_size(struct sotc_region *r, int x, int y);
-int sotc_region_set_xy(struct sotc_region *r, int x, int y);
-
-int sotc_region_get_size(struct sotc_region *r, int *x, int *y);
-int sotc_region_get_xy(struct sotc_region *r, int *x, int *y);
+int sotc_region_set_height(struct sotc_region *r, double h);
+int sotc_region_get_height(struct sotc_region *r, double *h);
 
 /* State api */
 

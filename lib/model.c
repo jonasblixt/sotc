@@ -100,7 +100,8 @@ static int parse_region(struct sotc_model *model, json_object *j_region)
             model->root = r;
         }
 
-        L_DEBUG("Initialized region: %s", r->name);
+        L_DEBUG("Initialized region: %s ps=%s", r->name,
+                (r->parent_state != NULL)?(r->parent_state->name):"");
 
         if (!json_object_object_get_ex(j_r, "states", &jobj))
         {

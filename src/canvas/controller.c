@@ -7,6 +7,10 @@
 #include "canvas/view.h"
 
 static struct sotc_model *model;
+static struct sotc_state *selected_state = NULL;
+static struct sotc_region *selected_region = NULL;
+static double selection_start_x, selection_start_y;
+static double sselection_x, sselection_y;
 
 static void draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data)
 {
@@ -61,12 +65,36 @@ static gboolean motion_notify_event_cb (GtkWidget      *widget,
                                         GdkEventMotion *event,
                                         gpointer        data)
 {
+    double tx_tmp, ty_tmp;
+    double sx, sy;
+    static double tx, ty;
 
-    //printf("%s\n", __func__);
-  /*if (event->state & GDK_BUTTON1_MASK)
-    state_canvas_draw (widget, event->x, event->y);
-*/
-  /* We've handled it, stop processing */
+    sx = (int)(selection_start_x / 10) * 10;
+    sy = (int)(selection_start_y / 10) * 10;
+
+    if (selected_state && (event->state & GDK_BUTTON1_MASK)) {
+        tx_tmp = (int)(event->x / 10) * 10;
+        ty_tmp = (int)(event->y / 10) * 10;
+
+        if (tx != tx_tmp || ty != ty_tmp) {
+            if (fabs(tx - selection_start_x) > 10 ||
+                fabs(ty - selection_start_y) > 10) {
+
+                double dx = tx_tmp - sx;
+                double dy = ty_tmp - sy;
+
+                printf("move %s --> %f %f\n", selected_state->name, dx, dy);
+                selected_state->x = sselection_x + dx;
+                selected_state->y = sselection_y + dy;
+                gtk_widget_queue_draw (widget);
+            }
+        }
+
+        tx = tx_tmp;
+        ty = ty_tmp;
+
+    }
+
   return TRUE;
 }
 
@@ -75,8 +103,7 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
     static struct sotc_stack *stack;
     struct sotc_region *r, *r2;
     struct sotc_state *s;
-    struct sotc_state *selected_state = NULL;
-    struct sotc_region *selected_region = NULL;
+    double x, y, w, h;
     bool last_object_state = false;
     int rc;
 
@@ -85,8 +112,11 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
                        event->y);
     gtk_widget_grab_focus(widget);
 
-    int x = (int) event->x;
-    int y = (int) event->y;
+    selected_state = NULL;
+    selected_region = NULL;
+
+    double px = event->x;
+    double py = (int) event->y;
 
     sotc_stack_init(&stack, SOTC_MAX_R_S);
     sotc_stack_push(stack, model->root);
@@ -94,9 +124,10 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
     while (sotc_stack_pop(stack, (void **) &r) == SOTC_OK)
     {
         r->focus = false;
+        sotc_get_region_absolute_coords(r, &x, &y, &w, &h);
 
-        if ( (x > r->x) && (x < (r->x + r->w)) &&
-             (y > r->y) && (y < (r->y + r->h))) {
+        if ( (px > x) && (px < (x + w)) &&
+             (py > y) && (py < (y + h))) {
              selected_region = r;
              last_object_state = false;
         }
@@ -104,9 +135,10 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
         for (s = r->state; s; s = s->next)
         {
             s->focus = false;
+            sotc_get_state_absolute_coords(s, &x, &y, &w, &h);
 
-            if ( (x > s->x) && (x < (s->x + s->w)) &&
-                 (y > s->y) && (y < (s->y + s->h))) {
+            if ( (px > x) && (px < (x + w)) &&
+                 (py > y) && (py < (y + h))) {
                  selected_state = s;
                  last_object_state = true;
             }
@@ -120,11 +152,18 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
     sotc_stack_free(stack);
 
     if (selected_state && last_object_state) {
-         L_DEBUG("State %s selected!", selected_state->name);
+         L_DEBUG("State %s selected, pr = %s", selected_state->name,
+                    selected_state->parent_region->name);
          selected_state->focus = true;
+         selection_start_y = event->y;
+         selection_start_x = event->x;
+         sselection_x = selected_state->x;
+         sselection_y = selected_state->y;
+         selected_region = NULL;
     } else if (selected_region && !last_object_state) {
          L_DEBUG("Region %s selected!", selected_region->name);
          selected_region->focus = true;
+         selected_state = NULL;
     }
 
     gtk_widget_queue_draw (widget);

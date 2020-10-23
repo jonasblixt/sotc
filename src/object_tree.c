@@ -123,7 +123,7 @@ int sotc_object_tree_update(struct sotc_model *model)
 
     while (stack_pop_r_iter_pair(stack, &r, &parent) == SOTC_OK)
     {
-        printf("R %s <%i, %i, %i, %i>\n", r->name, r->x, r->y, r->w, r->h);
+        printf("R %s\n", r->name);
 
         gtk_tree_store_append(store, &r_iter, parent);
 

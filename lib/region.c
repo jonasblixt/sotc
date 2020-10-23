@@ -53,31 +53,15 @@ int sotc_region_append_state(struct sotc_region *r, struct sotc_state *state)
     return SOTC_OK;
 }
 
-int sotc_region_set_size(struct sotc_region *r, int x, int y)
+int sotc_region_set_height(struct sotc_region *r, double h)
 {
-    r->w = x;
-    r->h = y;
+    r->h = h;
     return SOTC_OK;
 }
 
-int sotc_region_set_xy(struct sotc_region *r, int x, int y)
+int sotc_region_get_height(struct sotc_region *r, double *h)
 {
-    r->x = x;
-    r->y = y;
-    return SOTC_OK;
-}
-
-int sotc_region_get_size(struct sotc_region *r, int *x, int *y)
-{
-    (*x) = r->w;
-    (*y) = r->h;
-    return SOTC_OK;
-}
-
-int sotc_region_get_xy(struct sotc_region *r, int *x, int *y)
-{
-    (*x) = r->x;
-    (*y) = r->y;
+    (*h) = r->h;
     return SOTC_OK;
 }
 
@@ -92,16 +76,8 @@ int sotc_region_serialize(struct sotc_region *region, json_object *state,
 
     json_object_object_add(j_region, "name", j_name);
     json_object_object_add(j_region, "off_page", j_offpage);
-    json_object_object_add(j_region, "width",
-                json_object_new_int(region->w));
-
     json_object_object_add(j_region, "height",
                 json_object_new_int(region->h));
-
-    json_object_object_add(j_region, "x",
-                json_object_new_int(region->x));
-    json_object_object_add(j_region, "y",
-                json_object_new_int(region->y));
 
     json_object_object_add(j_region, "states", j_states);
 
@@ -144,25 +120,10 @@ int sotc_region_deserialize(json_object *j_r, struct sotc_state *state,
         r->name = strdup(json_object_get_string(jobj));
     }
 
-    if (!json_object_object_get_ex(j_r, "x", &jobj))
-        r->x = 0;
-    else
-        r->x = json_object_get_int(jobj);
-
-    if (!json_object_object_get_ex(j_r, "y", &jobj))
-        r->y = 0;
-    else
-        r->y = json_object_get_int(jobj);
-
-    if (!json_object_object_get_ex(j_r, "width", &jobj))
-        r->w = 0;
-    else
-        r->w = json_object_get_int(jobj);
-
     if (!json_object_object_get_ex(j_r, "height", &jobj))
-        r->h = 0;
+        r->h = 0.0;
     else
-        r->h = json_object_get_int(jobj);
+        r->h = json_object_get_double(jobj);
 
     r->parent_state = state;
 

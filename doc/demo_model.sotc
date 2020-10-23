@@ -4,12 +4,8 @@
   "name":"Test",
   "region":{
     "name":"Root region",
-    "root":true,
     "off_page":false,
-    "width":1280,
-    "height":1024,
-    "x":0,
-    "y":0,
+    "height":-1,
     "states":[
       {
         "name":"A",
@@ -42,18 +38,15 @@
           {
             "name":"Another region",
             "off_page":false,
-            "width":1000,
-            "height":550,
-            "x":120,
-            "y":320,
+            "height":-1,
             "states":[
               {
                 "name":"C1",
                 "kind":"state",
                 "width":100,
                 "height":100,
-                "x":170,
-                "y":340,
+                "x":10,
+                "y":30,
                 "region":[
                 ]
               },
@@ -62,8 +55,8 @@
                 "kind":"state",
                 "width":100,
                 "height":100,
-                "x":140,
-                "y":470,
+                "x":10,
+                "y":140,
                 "region":[
                 ]
               },
@@ -72,24 +65,21 @@
                 "kind":"state",
                 "width":800,
                 "height":500,
-                "x":250,
-                "y":350,
+                "x":120,
+                "y":30,
                 "region":[
                   {
                     "name":"Yet another region",
                     "off_page":false,
-                    "width":750,
-                    "height":450,
-                    "x":260,
-                    "y":370,
+                    "height":-1,
                     "states":[
                       {
                         "name":"C31",
                         "kind":"state",
                         "width":100,
                         "height":100,
-                        "x":270,
-                        "y":400,
+                        "x":10,
+                        "y":40,
                         "region":[
                         ]
                       },
@@ -98,8 +88,8 @@
                         "kind":"state",
                         "width":100,
                         "height":100,
-                        "x":400,
-                        "y":400,
+                        "x":120,
+                        "y":40,
                         "region":[
                         ]
                       },
@@ -108,8 +98,8 @@
                         "kind":"state",
                         "width":100,
                         "height":100,
-                        "x":550,
-                        "y":400,
+                        "x":240,
+                        "y":40,
                         "region":[
                         ]
                       }
