@@ -8,14 +8,12 @@
 
 static struct sotc_model *model;
 
-static void state_canvas_draw(GtkWidget *widget,
-                              cairo_t *cr, gpointer data)
+static void draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data)
 {
     int rc;
     gint width, height;
     gint i;
     GtkAllocation allocation;
-
 
     printf("Draw!\n");
 
@@ -24,17 +22,25 @@ static void state_canvas_draw(GtkWidget *widget,
     width = allocation.width;
     height = allocation.height;
 
-
-    if (model != NULL)
-    {
-        sotc_canvas_render(cr, model->root, width, height);
-    }
+    sotc_canvas_render(cr, model->root, width, height);
 }
 
-gboolean my_keypress_function (GtkWidget *widget, GdkEventKey *event,
-                                gpointer data)
+gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data)
 {
     printf("%s\n", __func__);
+
+    if (event->keyval == GDK_KEY_a)
+    {
+        sotc_canvas_scale(0.1);
+        gtk_widget_queue_draw (widget);
+    }
+
+    if (event->keyval == GDK_KEY_b)
+    {
+        sotc_canvas_scale(-0.1);
+        gtk_widget_queue_draw (widget);
+    }
+
     if (event->keyval == GDK_KEY_space)
     {
         printf("SPACE KEY PRESSED!\n");
@@ -51,10 +57,9 @@ gboolean my_keypress_function (GtkWidget *widget, GdkEventKey *event,
 }
 
 
-static gboolean
-motion_notify_event_cb (GtkWidget      *widget,
-                        GdkEventMotion *event,
-                        gpointer        data)
+static gboolean motion_notify_event_cb (GtkWidget      *widget,
+                                        GdkEventMotion *event,
+                                        gpointer        data)
 {
 
     //printf("%s\n", __func__);
@@ -65,7 +70,7 @@ motion_notify_event_cb (GtkWidget      *widget,
   return TRUE;
 }
 
-gboolean my_buttonpress_function(GtkWidget *widget, GdkEventButton *event)
+gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
 {
     static struct sotc_stack *stack;
     struct sotc_region *r, *r2;
@@ -137,18 +142,18 @@ int sotc_state_canvas_init(GtkWidget **canvas)
                                      | GDK_POINTER_MOTION_MASK);
 
 
-  /* Event signals */
+    /* Event signals */
     g_signal_connect(G_OBJECT(c), "key_press_event",
-                     G_CALLBACK (my_keypress_function), NULL);
+                     G_CALLBACK (keypress_cb), NULL);
 
     g_signal_connect(G_OBJECT(c), "button_press_event",
-                     G_CALLBACK (my_buttonpress_function), NULL);
+                     G_CALLBACK (buttonpress_cb), NULL);
 
 
     g_signal_connect (G_OBJECT(c), "motion-notify-event",
                     G_CALLBACK (motion_notify_event_cb), NULL);
 
-    g_signal_connect(G_OBJECT(c), "draw", G_CALLBACK(state_canvas_draw), NULL);
+    g_signal_connect(G_OBJECT(c), "draw", G_CALLBACK(draw_cb), NULL);
 
     gtk_widget_set_can_focus(c, TRUE);
     gtk_widget_set_focus_on_click(c, TRUE);

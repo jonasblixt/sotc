@@ -10,10 +10,13 @@ addons:
     packages:
       - autoconf-archive
       - uuid-dev
-      - libglew-dev
       - libjson-c-dev
-      - libglfw3-dev
       - lcov
+      - libgtk-3-0
+      - libgtk-3-dev
+      - libcairo2
+      - libcairo2-dev
+
 script:
     - autoreconf -fi
     - ./configure --enable-code-coverage

@@ -5,6 +5,16 @@
 
 #include "canvas/view.h"
 
+static double zoom = 1.0;
+
+int sotc_canvas_scale(double zoom_change)
+{
+    zoom += zoom_change;
+
+    if (zoom < 0.0)
+        zoom = 0.0;
+}
+
 int sotc_canvas_render(cairo_t *cr, struct sotc_region *root,
                         int width, int height)
 {
@@ -13,7 +23,7 @@ int sotc_canvas_render(cairo_t *cr, struct sotc_region *root,
     struct sotc_state *s;
     static struct sotc_stack *stack;
 
-    cairo_scale(cr, 1.0, 1.0);
+    cairo_scale(cr, zoom, zoom);
 
     sotc_canvas_render_grid(cr, width, height);
 
