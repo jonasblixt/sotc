@@ -5,7 +5,7 @@
 
 #include "canvas/view.h"
 
-static double zoom = 1.0;
+static double scale = 1.7;
 
 bool sotc_region_is_root_or_offpage(struct sotc_region *r)
 {
@@ -47,8 +47,8 @@ int sotc_get_region_absolute_coords(struct sotc_region *r, double *x,
         *h = r->parent_state->h - 30.0;
         *w = r->parent_state->w;
     } else {
-        *h = 10000;
-        *w = 10000;
+        *h = 1190;
+        *w = 1684;
     }
 
     return 0;
@@ -87,12 +87,19 @@ int sotc_get_state_absolute_coords(struct sotc_state *s, double *x,
     return 0;
 }
 
-int sotc_canvas_scale(double zoom_change)
+int sotc_canvas_scale(double scale_change)
 {
-    zoom += zoom_change;
+    scale += scale_change;
 
-    if (zoom < 0.0)
-        zoom = 0.0;
+    if (scale < 0.0)
+        scale = 0.0;
+
+    printf("scale = %f\n", scale);
+}
+
+double sotc_canvas_get_scale(void)
+{
+    return scale;
 }
 
 int sotc_canvas_render(cairo_t *cr, struct sotc_region *root,
@@ -103,9 +110,9 @@ int sotc_canvas_render(cairo_t *cr, struct sotc_region *root,
     struct sotc_state *s;
     static struct sotc_stack *stack;
 
-    cairo_scale(cr, zoom, zoom);
+    cairo_scale(cr, scale, scale);
 
-    sotc_canvas_render_grid(cr, width, height);
+    sotc_canvas_render_grid(cr, 1684, 1190);
 
     rc = sotc_stack_init(&stack, SOTC_MAX_R_S);
 

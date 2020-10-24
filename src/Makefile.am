@@ -6,6 +6,7 @@ sotc_SOURCES = main.c \
 			   canvas/state.c \
 			   canvas/region.c \
 			   canvas/grid.c \
+			   canvas/selection.c \
 			   canvas/controller.c
 
 

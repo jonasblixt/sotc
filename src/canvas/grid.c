@@ -27,3 +27,8 @@ int sotc_canvas_render_grid(cairo_t *cr, int width, int height)
     cairo_restore(cr);
     return 0;
 }
+
+double sotc_canvas_nearest_grid_point(double in)
+{
+    return (int)(in / 10) * 10;
+}

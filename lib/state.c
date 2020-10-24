@@ -125,7 +125,13 @@ int sotc_state_deserialize(json_object *j_state, struct sotc_region *region,
 {
     int rc = SOTC_OK;
     struct sotc_state *state;
+    struct sotc_entry_exit *s_exit;
+    struct sotc_entry_exit *s_entry;
     json_object *j_state_name;
+    json_object *j_entries = NULL;
+    json_object *j_exits = NULL;
+    json_object *j_entry = NULL;
+    json_object *j_exit = NULL;
     json_object *jobj;
 
     state = malloc(sizeof(struct sotc_state));
@@ -159,6 +165,18 @@ int sotc_state_deserialize(json_object *j_state, struct sotc_region *region,
         state->h = 0;
     else
         state->h = json_object_get_int(jobj);
+
+    if (json_object_object_get_ex(j_state, "entry", &j_entries)) {
+        size_t n_entries = json_object_array_length(j_entries);
+
+        for (int n = 0; n < n_entries; n++)
+        {
+            j_entry = json_object_array_get_idx(j_entries, n)
+            s_entry = malloc(sizeof(s_entry));
+            memset(s_entry, 0, sizeof(*s_entry));
+            s_entry->name = strdup();
+        }
+    }
 
     state->name = strdup(json_object_get_string(j_state_name));
     state->parent_region = region;

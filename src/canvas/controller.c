@@ -1,4 +1,5 @@
 #include <math.h>
+#include <time.h>
 #include <sotc/sotc.h>
 #include <sotc/model.h>
 #include <sotc/stack.h>
@@ -18,8 +19,11 @@ static void draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data)
     gint width, height;
     gint i;
     GtkAllocation allocation;
+    struct timespec ts;
+    uint64_t r_time;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
 
-    printf("Draw!\n");
+    r_time = ts.tv_sec*1e3 + ts.tv_nsec / 1e6;
 
     gtk_widget_get_allocation(widget, &allocation);
 
@@ -27,11 +31,15 @@ static void draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data)
     height = allocation.height;
 
     sotc_canvas_render(cr, model->root, width, height);
+
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+
+    r_time = (ts.tv_sec*1e3 + ts.tv_nsec / 1e6) - r_time;
+    printf("render %ld ms\n", r_time);
 }
 
 gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data)
 {
-    printf("%s\n", __func__);
 
     if (event->keyval == GDK_KEY_a)
     {
@@ -43,6 +51,40 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data)
     {
         sotc_canvas_scale(-0.1);
         gtk_widget_queue_draw (widget);
+    }
+
+    if (event->keyval == GDK_KEY_x)
+    {
+        if (selected_state)
+            selected_state->w += 10;
+        gtk_widget_queue_draw (widget);
+    }
+
+    if (event->keyval == GDK_KEY_X)
+    {
+        if (selected_state)
+            selected_state->w -= 10;
+        gtk_widget_queue_draw (widget);
+    }
+
+    if (event->keyval == GDK_KEY_y)
+    {
+        if (selected_state)
+            selected_state->h += 10;
+        gtk_widget_queue_draw (widget);
+    }
+
+    if (event->keyval == GDK_KEY_Y)
+    {
+        if (selected_state)
+            selected_state->h -= 10;
+        gtk_widget_queue_draw (widget);
+    }
+
+    if (event->keyval == GDK_KEY_s)
+    {
+        printf("Saving...\n");
+        sotc_model_write("out.sotc", model);
     }
 
     if (event->keyval == GDK_KEY_space)
@@ -69,12 +111,12 @@ static gboolean motion_notify_event_cb (GtkWidget      *widget,
     double sx, sy;
     static double tx, ty;
 
-    sx = (int)(selection_start_x / 10) * 10;
-    sy = (int)(selection_start_y / 10) * 10;
+    sx = sotc_canvas_nearest_grid_point(selection_start_x);
+    sy = sotc_canvas_nearest_grid_point(selection_start_y);
 
     if (selected_state && (event->state & GDK_BUTTON1_MASK)) {
-        tx_tmp = (int)(event->x / 10) * 10;
-        ty_tmp = (int)(event->y / 10) * 10;
+        tx_tmp = sotc_canvas_nearest_grid_point(event->x);
+        ty_tmp = sotc_canvas_nearest_grid_point(event->y);
 
         if (tx != tx_tmp || ty != ty_tmp) {
             if (fabs(tx - selection_start_x) > 10 ||
@@ -84,8 +126,10 @@ static gboolean motion_notify_event_cb (GtkWidget      *widget,
                 double dy = ty_tmp - sy;
 
                 printf("move %s --> %f %f\n", selected_state->name, dx, dy);
-                selected_state->x = sselection_x + dx;
-                selected_state->y = sselection_y + dy;
+                selected_state->x = sselection_x +
+                                         (dx * 1/sotc_canvas_get_scale());
+                selected_state->y = sselection_y +
+                                         (dy * 1/sotc_canvas_get_scale());
                 gtk_widget_queue_draw (widget);
             }
         }
@@ -125,6 +169,10 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
     {
         r->focus = false;
         sotc_get_region_absolute_coords(r, &x, &y, &w, &h);
+        x *= sotc_canvas_get_scale();
+        y *= sotc_canvas_get_scale();
+        w *= sotc_canvas_get_scale();
+        h *= sotc_canvas_get_scale();
 
         if ( (px > x) && (px < (x + w)) &&
              (py > y) && (py < (y + h))) {
@@ -136,6 +184,11 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
         {
             s->focus = false;
             sotc_get_state_absolute_coords(s, &x, &y, &w, &h);
+
+            x *= sotc_canvas_get_scale();
+            y *= sotc_canvas_get_scale();
+            w *= sotc_canvas_get_scale();
+            h *= sotc_canvas_get_scale();
 
             if ( (px > x) && (px < (x + w)) &&
                  (py > y) && (py < (y + h))) {

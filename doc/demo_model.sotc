@@ -10,30 +10,50 @@
       {
         "name":"A",
         "kind":"state",
-        "width":150,
-        "height":150,
-        "x":110,
-        "y":110,
+        "width":310,
+        "height":240,
+        "x":100,
+        "y":72,
+        "entry":[
+            {
+                name:"eA1",
+                id:"44bf3839-d782-4118-bf58-c33c5ad775c4"
+            },
+            {
+                name:"eA2",
+                id:"f924e35f-d169-4383-b9be-bf7deba72f4a",
+            },
+        ],
+        "exit":[
+            {
+                name:"xA1",
+                id:"1725c6b5-1a41-4a82-9831-92feb72dad6a",
+            },
+            {
+                name:"xA2",
+                id:"3bfebe4b-897b-47a3-b405-465f5de3c74d",
+            },
+        ],
         "region":[
         ]
       },
       {
         "name":"The quick brown fox is clipped ÅÄÖ",
         "kind":"state",
-        "width":150,
-        "height":160,
-        "x":370,
-        "y":110,
+        "width":380,
+        "height":240,
+        "x":446,
+        "y":72,
         "region":[
         ]
       },
       {
         "name":"C",
         "kind":"state",
-        "width":1100,
-        "height":600,
-        "x":110,
-        "y":300,
+        "width":1110,
+        "height":560,
+        "x":97,
+        "y":340,
         "region":[
           {
             "name":"Another region",
@@ -45,8 +65,8 @@
                 "kind":"state",
                 "width":100,
                 "height":100,
-                "x":10,
-                "y":30,
+                "x":71,
+                "y":131,
                 "region":[
                 ]
               },
@@ -55,18 +75,18 @@
                 "kind":"state",
                 "width":100,
                 "height":100,
-                "x":10,
-                "y":140,
+                "x":71,
+                "y":341,
                 "region":[
                 ]
               },
               {
                 "name":"C3",
                 "kind":"state",
-                "width":800,
-                "height":500,
-                "x":120,
-                "y":30,
+                "width":450,
+                "height":490,
+                "x":336,
+                "y":27,
                 "region":[
                   {
                     "name":"Yet another region",
@@ -78,8 +98,8 @@
                         "kind":"state",
                         "width":100,
                         "height":100,
-                        "x":10,
-                        "y":40,
+                        "x":70,
+                        "y":60,
                         "region":[
                         ]
                       },
@@ -88,8 +108,8 @@
                         "kind":"state",
                         "width":100,
                         "height":100,
-                        "x":120,
-                        "y":40,
+                        "x":70,
+                        "y":190,
                         "region":[
                         ]
                       },
@@ -98,8 +118,8 @@
                         "kind":"state",
                         "width":100,
                         "height":100,
-                        "x":240,
-                        "y":40,
+                        "x":70,
+                        "y":310,
                         "region":[
                         ]
                       }

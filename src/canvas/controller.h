@@ -10,4 +10,7 @@ int sotc_state_canvas_free(GtkWidget *canvas);
 int sotc_state_canvas_update(struct sotc_model *model,
                              struct sotc_region *region);
 
+int sotc_selection_update(struct sotc_state *s, bool append);
+
+
 #endif  // CANVAS_CONTROLLER_H_
