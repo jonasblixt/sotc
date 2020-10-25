@@ -2,7 +2,7 @@
 #define INCLUDE_SOTC_MODEL_H_
 
 #include <stdint.h>
-#include <uuid.h>
+#include <uuid/uuid.h>
 #include <stdbool.h>
 #include <json.h>
 

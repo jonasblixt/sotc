@@ -751,9 +751,10 @@ err_free_out:
     return rc;
 }
 
-static int action_list_delete(struct sotc_action *list, uuid_t id)
+static int action_list_delete(struct sotc_action **list_in, uuid_t id)
 {
     bool found_item = false;
+    struct sotc_action *list = *list_in;
     struct sotc_action *item = list;
     struct sotc_action *prev, *next;
 
@@ -763,9 +764,12 @@ static int action_list_delete(struct sotc_action *list, uuid_t id)
         next = item->next;
 
         if (uuid_compare(item->id, id) == 0) {
-
             if (prev)
                 prev->next = next;
+
+            /* If this is the first and only item, set input to NULL */
+            if (item == *list_in)
+                (*list_in) = NULL;
 
             free((void *) item->name);
             memset(item, 0, sizeof(*item));
@@ -785,13 +789,20 @@ static int action_list_delete(struct sotc_action *list, uuid_t id)
 
 int sotc_model_delete_action(struct sotc_model *model, uuid_t id)
 {
-    if (action_list_delete(model->entries, id) == SOTC_OK)
+    uuid_t id_tmp;
+    char uuid_str[37];
+
+    memcpy(id_tmp, id, 16);
+    uuid_unparse(id, uuid_str);
+    L_DEBUG("Deleting action %s", uuid_str);
+
+    if (action_list_delete(&model->entries, id_tmp) == SOTC_OK)
         return SOTC_OK;
-    if (action_list_delete(model->exits, id) == SOTC_OK)
+    if (action_list_delete(&model->exits, id_tmp) == SOTC_OK)
         return SOTC_OK;
-    if (action_list_delete(model->guards, id) == SOTC_OK)
+    if (action_list_delete(&model->guards, id_tmp) == SOTC_OK)
         return SOTC_OK;
-    if (action_list_delete(model->actions, id) == SOTC_OK)
+    if (action_list_delete(&model->actions, id_tmp) == SOTC_OK)
         return SOTC_OK;
     return -SOTC_ERROR;
 }
