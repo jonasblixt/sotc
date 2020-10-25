@@ -54,28 +54,28 @@ int sotc_state_append_region(struct sotc_state *state, struct sotc_region *r)
     return SOTC_OK;
 }
 
-int sotc_state_set_size(struct sotc_state *s, int x, int y)
+int sotc_state_set_size(struct sotc_state *s, double x, double y)
 {
     s->w = x;
     s->h = y;
     return SOTC_OK;
 }
 
-int sotc_state_set_xy(struct sotc_state *s, int x, int y)
+int sotc_state_set_xy(struct sotc_state *s, double x, double y)
 {
     s->x = x;
     s->y = y;
     return SOTC_OK;
 }
 
-int sotc_state_get_size(struct sotc_state *s, int *x, int *y)
+int sotc_state_get_size(struct sotc_state *s, double *x, double *y)
 {
     (*x) = s->w;
     (*y) = s->h;
     return SOTC_OK;
 }
 
-int sotc_state_get_xy(struct sotc_state *s, int *x, int *y)
+int sotc_state_get_xy(struct sotc_state *s, double *x, double *y)
 {
     (*x) = s->x;
     (*y) = s->y;
@@ -95,15 +95,15 @@ int sotc_state_serialize(struct sotc_state *state, json_object *region,
     json_object_object_add(j_state, "kind", j_kind);
 
     json_object_object_add(j_state, "width",
-                json_object_new_int(state->w));
+                json_object_new_double(state->w));
 
     json_object_object_add(j_state, "height",
-                json_object_new_int(state->h));
+                json_object_new_double(state->h));
 
     json_object_object_add(j_state, "x",
-                json_object_new_int(state->x));
+                json_object_new_double(state->x));
     json_object_object_add(j_state, "y",
-                json_object_new_int(state->y));
+                json_object_new_double(state->y));
 
     json_object_object_add(j_state, "region", j_region);
 
@@ -129,6 +129,7 @@ int sotc_state_deserialize(json_object *j_state, struct sotc_region *region,
     struct sotc_entry_exit *s_entry;
     json_object *j_state_name;
     json_object *j_entries = NULL;
+    json_object *k_entry_name = NULL;
     json_object *j_exits = NULL;
     json_object *j_entry = NULL;
     json_object *j_exit = NULL;
@@ -149,32 +150,30 @@ int sotc_state_deserialize(json_object *j_state, struct sotc_region *region,
     if (!json_object_object_get_ex(j_state, "x", &jobj))
         state->x = 0;
     else
-        state->x = json_object_get_int(jobj);
+        state->x = json_object_get_double(jobj);
 
     if (!json_object_object_get_ex(j_state, "y", &jobj))
         state->y = 0;
     else
-        state->y = json_object_get_int(jobj);
+        state->y = json_object_get_double(jobj);
 
     if (!json_object_object_get_ex(j_state, "width", &jobj))
         state->w = 0;
     else
-        state->w = json_object_get_int(jobj);
+        state->w = json_object_get_double(jobj);
 
     if (!json_object_object_get_ex(j_state, "height", &jobj))
         state->h = 0;
     else
-        state->h = json_object_get_int(jobj);
+        state->h = json_object_get_double(jobj);
 
     if (json_object_object_get_ex(j_state, "entry", &j_entries)) {
         size_t n_entries = json_object_array_length(j_entries);
 
         for (int n = 0; n < n_entries; n++)
         {
-            j_entry = json_object_array_get_idx(j_entries, n)
-            s_entry = malloc(sizeof(s_entry));
-            memset(s_entry, 0, sizeof(*s_entry));
-            s_entry->name = strdup();
+            j_entry = json_object_array_get_idx(j_entries, n);
+            L_DEBUG("Found entry: %s", json_object_get_string(j_entry));
         }
     }
 

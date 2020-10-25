@@ -2,6 +2,27 @@
   "kind":"SOTC Model",
   "version":0,
   "name":"Test",
+  "papersize":"A2",
+  "entry":[
+        {
+            "name":"eA1",
+            "id":"44bf3839-d782-4118-bf58-c33c5ad775c4"
+        },
+        {
+            "name":"eA2",
+            "id":"f924e35f-d169-4383-b9be-bf7deba72f4a",
+        },
+    ],
+  "exit":[
+        {
+            "name":"xA1",
+            "id":"1725c6b5-1a41-4a82-9831-92feb72dad6a",
+        },
+        {
+            "name":"xA2",
+            "id":"3bfebe4b-897b-47a3-b405-465f5de3c74d",
+        },
+  ],
   "region":{
     "name":"Root region",
     "off_page":false,
@@ -15,24 +36,12 @@
         "x":100,
         "y":72,
         "entry":[
-            {
-                name:"eA1",
-                id:"44bf3839-d782-4118-bf58-c33c5ad775c4"
-            },
-            {
-                name:"eA2",
-                id:"f924e35f-d169-4383-b9be-bf7deba72f4a",
-            },
+            "44bf3839-d782-4118-bf58-c33c5ad775c4",
+            "f924e35f-d169-4383-b9be-bf7deba72f4a",
         ],
         "exit":[
-            {
-                name:"xA1",
-                id:"1725c6b5-1a41-4a82-9831-92feb72dad6a",
-            },
-            {
-                name:"xA2",
-                id:"3bfebe4b-897b-47a3-b405-465f5de3c74d",
-            },
+            "1725c6b5-1a41-4a82-9831-92feb72dad6a",
+            "3bfebe4b-897b-47a3-b405-465f5de3c74d",
         ],
         "region":[
         ]

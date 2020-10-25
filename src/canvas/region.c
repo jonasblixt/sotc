@@ -13,7 +13,7 @@ int sotc_canvas_render_region(cairo_t *cr, struct sotc_region *region)
 
 
     if (!region->focus)
-        return;
+        return 0;
 
     sotc_get_region_absolute_coords(region, &x, &y, &w, &h);
 
@@ -29,4 +29,6 @@ int sotc_canvas_render_region(cairo_t *cr, struct sotc_region *region)
     cairo_rectangle (cr, x, y, w, h);
     cairo_stroke (cr);
     cairo_restore (cr);
+
+    return 0;
 }

@@ -61,6 +61,56 @@ static int pop_r_js_pair(struct sotc_stack *stack,
     return sotc_stack_pop(stack, (void **) r);
 }
 
+static int parse_action_list(json_object *j_list, struct sotc_action **out)
+{
+    size_t no_of_actions = json_object_array_length(j_list);
+    json_object *j_action;
+    json_object *j_name;
+    json_object *j_id;
+
+    L_DEBUG("no_of_actions = %zu", no_of_actions);
+
+    struct sotc_action *list = NULL;
+    struct sotc_action *action;
+
+    if (no_of_actions == 0) {
+        (*out) = NULL;
+        return SOTC_OK;
+    }
+
+    for (int n = 0; n < no_of_actions; n++) {
+        j_action = json_object_array_get_idx(j_list, n);
+
+        if (!json_object_object_get_ex(j_action, "name", &j_name)) {
+            L_ERR("Could not read name property\n");
+            return -SOTC_ERROR;
+        }
+
+        if (!json_object_object_get_ex(j_action, "id", &j_id)) {
+            L_ERR("Could not read id property\n");
+            return -SOTC_ERROR;
+        }
+
+        action = malloc(sizeof(*action));
+
+        if (action == NULL)
+            return -SOTC_ERROR;
+        memset(action, 0, sizeof(*action));
+
+        action->name = strdup(json_object_get_string(j_name));
+        uuid_parse(json_object_get_string(j_id), action->id);
+
+        if (list == NULL) {
+            (*out) = action;
+            list = action;
+        } else {
+            list->next = action;
+        }
+    }
+
+    return SOTC_OK;
+}
+
 static int parse_region(struct sotc_model *model, json_object *j_region)
 {
     int rc = SOTC_OK;
@@ -198,6 +248,22 @@ static int sotc_model_parse(struct sotc_model *model)
                 L_ERR("Unknown model kind (%s)", json_object_get_string(val));
             }
         }
+        else if (strcmp(key, "entries") == 0)
+        {
+            rc = parse_action_list(val, &model->entries);
+        }
+        else if (strcmp(key, "exits") == 0)
+        {
+            rc = parse_action_list(val, &model->exits);
+        }
+        else if (strcmp(key, "actions") == 0)
+        {
+            rc = parse_action_list(val, &model->actions);
+        }
+        else if (strcmp(key, "guards") == 0)
+        {
+            rc = parse_action_list(val, &model->guards);
+        }
         else if (strcmp(key, "region") == 0)
         {
             found_region = true;
@@ -319,6 +385,33 @@ err_free_model:
     return rc;
 }
 
+static int serialize_action_list(struct sotc_action *list,
+                                 json_object **out)
+{
+    struct sotc_action *item = list;
+    char uuid_str[37];
+
+    json_object *actions = json_object_new_array();
+    json_object *action;
+    json_object *name;
+    json_object *id;
+
+    while (item) {
+        action = json_object_new_object();
+        name = json_object_new_string(item->name);
+        uuid_unparse(item->id, uuid_str);
+        id = json_object_new_string(uuid_str);
+
+        json_object_object_add(action, "name", name);
+        json_object_object_add(action, "id", id);
+        json_object_array_add(actions, action);
+        item = item->next;
+    }
+
+    (*out) = actions;
+    return SOTC_OK;
+}
+
 int sotc_model_create(struct sotc_model **model_pp, const char *name)
 {
     struct sotc_model *model = NULL;
@@ -403,6 +496,44 @@ int sotc_model_write(const char *filename, struct sotc_model *model)
         goto err_free_out;
     }
 
+    /* Serialize actions */
+    json_object *j_actions;
+    json_object *j_entries;
+    json_object *j_exits;
+    json_object *j_guards;
+
+    rc = serialize_action_list(model->actions, &j_actions);
+
+    if (rc != SOTC_OK)
+    {
+        L_ERR("Actions serialization failed");
+        goto err_free_out;
+    }
+
+    rc = serialize_action_list(model->entries, &j_entries);
+
+    if (rc != SOTC_OK)
+    {
+        L_ERR("Entries serialization failed");
+        goto err_free_out;
+    }
+
+    rc = serialize_action_list(model->exits, &j_exits);
+
+    if (rc != SOTC_OK)
+    {
+        L_ERR("Exits serialization failed");
+        goto err_free_out;
+    }
+
+    rc = serialize_action_list(model->guards, &j_guards);
+
+    if (rc != SOTC_OK)
+    {
+        L_ERR("Guards serialization failed");
+        goto err_free_out;
+    }
+
     /* Create the model root object */
 
     json_object *jr = json_object_new_object();
@@ -413,6 +544,10 @@ int sotc_model_write(const char *filename, struct sotc_model *model)
     json_object_object_add(jr, "kind", jr_kind);
     json_object_object_add(jr, "version", jr_version);
     json_object_object_add(jr, "name", jr_name);
+    json_object_object_add(jr, "actions", j_actions);
+    json_object_object_add(jr, "entries", j_entries);
+    json_object_object_add(jr, "exits", j_exits);
+    json_object_object_add(jr, "guards", j_guards);
     json_object_object_add(jr, "region", root_j_region);
 
 
@@ -446,6 +581,24 @@ err_free_out:
     return rc;
 }
 
+static int free_action_list(struct sotc_action *list)
+{
+    struct sotc_action *item = list;
+    struct sotc_action *tmp;
+
+    if (list == NULL)
+        return SOTC_OK;
+
+    while (item) {
+        tmp = item->next;
+        free((void *) item->name);
+        free(item);
+        item = tmp;
+    }
+
+    return SOTC_OK;
+}
+
 int sotc_model_free(struct sotc_model *model)
 {
     struct sotc_stack *stack, *free_stack;
@@ -459,6 +612,30 @@ int sotc_model_free(struct sotc_model *model)
         return rc;
 
     rc = sotc_stack_init(&free_stack, SOTC_MAX_OBJECTS);
+
+    if (rc != SOTC_OK)
+        return rc;
+
+    L_DEBUG("Freeing actions");
+    rc = free_action_list(model->actions);
+
+    if (rc != SOTC_OK)
+        return rc;
+
+    L_DEBUG("Freeing entries");
+    rc = free_action_list(model->entries);
+
+    if (rc != SOTC_OK)
+        return rc;
+
+    L_DEBUG("Freeing exits");
+    rc = free_action_list(model->exits);
+
+    if (rc != SOTC_OK)
+        return rc;
+
+    L_DEBUG("Freeing guards");
+    rc = free_action_list(model->guards);
 
     if (rc != SOTC_OK)
         return rc;
@@ -512,4 +689,129 @@ int sotc_model_free(struct sotc_model *model)
 const char * sotc_model_name(struct sotc_model *model)
 {
     return model->name;
+}
+
+int sotc_model_add_action(struct sotc_model *model,
+                          enum sotc_action_kind kind,
+                          const char *name,
+                          struct sotc_action **act)
+{
+    int rc = SOTC_OK;
+    struct sotc_action *action;
+    struct sotc_action *list, **dest;
+
+    action = malloc(sizeof(struct sotc_action));
+
+    if (action == NULL)
+        return -1;
+
+    memset(action, 0, sizeof(*action));
+
+    uuid_generate_random(action->id);
+    action->kind = kind;
+    action->name = strdup(name);
+
+    switch (kind) {
+        case SOTC_ACTION_ACTION:
+            dest = &model->actions;
+        break;
+        case SOTC_ACTION_ENTRY:
+            dest = &model->entries;
+        break;
+        case SOTC_ACTION_EXIT:
+            dest = &model->exits;
+        break;
+        case SOTC_ACTION_GUARD:
+            dest = &model->guards;
+        break;
+        default:
+            rc = -1;
+            goto err_free_out;
+    }
+
+    list = *dest;
+
+    if (list == NULL) {
+        list = action;
+        (*dest) = list;
+    } else {
+        while (list->next != NULL)
+            list = list->next;
+        list->next = action;
+    }
+
+    if (act) {
+        (*act) = action;
+    }
+
+    return rc;
+err_free_out:
+    free((void *) action->name);
+    free(action);
+    return rc;
+}
+
+static int action_list_delete(struct sotc_action *list, uuid_t id)
+{
+    bool found_item = false;
+    struct sotc_action *item = list;
+    struct sotc_action *prev, *next;
+
+    prev = NULL;
+
+    while (item) {
+        next = item->next;
+
+        if (uuid_compare(item->id, id) == 0) {
+
+            if (prev)
+                prev->next = next;
+
+            free((void *) item->name);
+            memset(item, 0, sizeof(*item));
+            free(item);
+            found_item = true;
+        }
+
+        prev = item;
+        item = item->next;
+    }
+
+    if (found_item)
+        return SOTC_OK;
+    else
+        return -SOTC_ERROR;
+}
+
+int sotc_model_delete_action(struct sotc_model *model, uuid_t id)
+{
+    if (action_list_delete(model->entries, id) == SOTC_OK)
+        return SOTC_OK;
+    if (action_list_delete(model->exits, id) == SOTC_OK)
+        return SOTC_OK;
+    if (action_list_delete(model->guards, id) == SOTC_OK)
+        return SOTC_OK;
+    if (action_list_delete(model->actions, id) == SOTC_OK)
+        return SOTC_OK;
+    return -SOTC_ERROR;
+}
+
+struct sotc_action* sotc_model_get_entries(struct sotc_model *model)
+{
+    return model->entries;
+}
+
+struct sotc_action* sotc_model_get_exits(struct sotc_model *model)
+{
+    return model->exits;
+}
+
+struct sotc_action* sotc_model_get_guards(struct sotc_model *model)
+{
+    return model->guards;
+}
+
+struct sotc_action* sotc_model_get_actions(struct sotc_model *model)
+{
+    return model->actions;
 }

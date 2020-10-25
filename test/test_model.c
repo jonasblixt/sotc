@@ -102,25 +102,13 @@ TEST(write_model)
     rc = sotc_add_region(c, false, &r1);
     ASSERT_EQ(rc, SOTC_OK);
 
-    rc = sotc_region_set_size(r1, 100, 100);
+    rc = sotc_region_set_height(r1, 100);
     ASSERT_EQ(rc, SOTC_OK);
 
-    int x,y;
-    rc = sotc_region_get_size(r1, &x, &y);
+    double height;
+    rc = sotc_region_get_height(r1, &height);
     ASSERT_EQ(rc, SOTC_OK);
-    ASSERT_EQ(x, 100);
-    ASSERT_EQ(y, 100);
-
-    x = 223;
-    y = 221;
-    rc = sotc_region_set_xy(r1, x, y);
-    ASSERT_EQ(rc, SOTC_OK);
-
-
-    rc = sotc_region_get_xy(r1, &x, &y);
-    ASSERT_EQ(rc, SOTC_OK);
-    ASSERT_EQ(x, 223);
-    ASSERT_EQ(y, 221);
+    ASSERT_EQ(height, 100);
 
     rc = sotc_set_region_name(r1, "Another region");
     ASSERT_EQ(rc, SOTC_OK);
@@ -180,4 +168,59 @@ TEST(load_model3)
 
     rc = sotc_model_free(model);
     ASSERT_EQ(rc, SOTC_OK);
+}
+
+TEST(create_entry_action)
+{
+    int rc;
+    struct sotc_model *model;
+    struct sotc_state *a, *b, *c;
+    struct sotc_action *action, *action2;
+    char *name;
+    char uuid_str[37];
+    char uuid_str2[37];
+
+    printf("Creating model\n");
+    rc = sotc_model_create(&model, "Test");
+    ASSERT_EQ(rc, SOTC_OK);
+    ASSERT(model != NULL);
+    ASSERT_EQ((char *) sotc_model_name(model), "Test");
+
+    rc = sotc_set_region_name(model->root, "Root region");
+    ASSERT_EQ(rc, SOTC_OK);
+
+    printf("Adding state\n");
+    rc = sotc_add_state(model->root, "A", &a);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_model_add_action(model, SOTC_ACTION_ENTRY,
+                                     "test-action", &action);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    uuid_unparse(action->id, uuid_str);
+    printf("Added action '%s'\n", uuid_str);
+    name = strdup(action->name);
+    ASSERT_EQ(name, "test-action");
+
+    rc = sotc_model_write("test_entry_action.sotc", model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_model_free(model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    /* Re-load model */
+
+    rc = sotc_model_load("test_entry_action.sotc", &model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    printf("Model load %i\n", rc);
+    printf("model->actions = %p\n", model->actions);
+
+    uuid_unparse(model->entries->id, uuid_str2);
+    ASSERT_EQ((char *) uuid_str, (char *) uuid_str2);
+    ASSERT_EQ(model->entries->name, "test-action");
+
+    rc = sotc_model_free(model);
+    ASSERT_EQ(rc, SOTC_OK);
+    free(name);
 }

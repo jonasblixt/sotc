@@ -2,14 +2,16 @@
 COMMON_TEST_CFLAGS = -I $(top_srcdir)/include \
                      -I $(top_srcdir)/lib \
                      -fsanitize=address \
-					 $(JSONC_CFLAGS) \
-					 -DSOTC_TEST_SRC=\"$(abs_top_srcdir)/test/\" \
-					 -g -O0 \
-					 -fno-omit-frame-pointer
+                     $(JSONC_CFLAGS) \
+                     $(UUID_CFLAGS) \
+                     -DSOTC_TEST_SRC=\"$(abs_top_srcdir)/test/\" \
+                     -g -O0 \
+                     -fno-omit-frame-pointer
 
 COMMON_TEST_LDADD = libnala.la \
-					$(top_builddir)/lib/libsotc.la \
-					$(JSONC_LIBS)
+                    $(top_builddir)/lib/libsotc.la \
+                    $(JSONC_LIBS) \
+                    $(UUID_LIBS)
 
 check_LTLIBRARIES = libnala.la
 
@@ -17,8 +19,8 @@ libnala_la_SOURCES = nala.c
 libnala_la_CFLAGS = $(COMMON_TEST_CFLAGS)
 
 check_PROGRAMS = test1 \
-				 test_stack \
-				 test_model
+                 test_stack \
+                 test_model
 
 test1_SOURCES = common.c test1.c
 test1_LDADD = $(COMMON_TEST_LDADD)
@@ -33,5 +35,5 @@ test_model_LDADD = $(COMMON_TEST_LDADD)
 test_model_CFLAGS = $(COMMON_TEST_CFLAGS)
 
 TESTS = test1 \
-		test_stack \
-		test_model
+        test_stack \
+        test_model
