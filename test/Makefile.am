@@ -20,7 +20,8 @@ libnala_la_CFLAGS = $(COMMON_TEST_CFLAGS)
 
 check_PROGRAMS = test1 \
                  test_stack \
-                 test_model
+                 test_model \
+                 test_actions
 
 test1_SOURCES = common.c test1.c
 test1_LDADD = $(COMMON_TEST_LDADD)
@@ -34,6 +35,11 @@ test_model_SOURCES = common.c test_model.c
 test_model_LDADD = $(COMMON_TEST_LDADD)
 test_model_CFLAGS = $(COMMON_TEST_CFLAGS)
 
+test_actions_SOURCES = common.c test_actions.c
+test_actions_LDADD = $(COMMON_TEST_LDADD)
+test_actions_CFLAGS = $(COMMON_TEST_CFLAGS)
+
 TESTS = test1 \
         test_stack \
-        test_model
+        test_model \
+        test_actions
