@@ -118,6 +118,10 @@ int sotc_model_add_action(struct sotc_model *model,
                           const char *name,
                           struct sotc_action **act);
 int sotc_model_delete_action(struct sotc_model *model, uuid_t id);
+int sotc_model_get_action(struct sotc_model *model, uuid_t id,
+                          enum sotc_action_kind kind,
+                          struct sotc_action **result);
+
 struct sotc_action* sotc_model_get_entries(struct sotc_model *model);
 struct sotc_action* sotc_model_get_exits(struct sotc_model *model);
 struct sotc_action* sotc_model_get_guards(struct sotc_model *model);
@@ -144,8 +148,17 @@ int sotc_region_get_height(struct sotc_region *r, double *h);
 int sotc_add_state(struct sotc_region *region, const char *name,
                     struct sotc_state **out);
 
-int sotc_state_add_exit(struct sotc_state *state, const char *action_name);
-int sotc_state_add_entry(struct sotc_state *state, const char *action_name);
+int sotc_state_add_entry(struct sotc_model *model,
+                         struct sotc_state *state,
+                         uuid_t id);
+
+int sotc_state_add_exit(struct sotc_model *model,
+                        struct sotc_state *state,
+                        uuid_t id);
+
+int sotc_state_delete_entry(struct sotc_state *state, uuid_t id);
+int sotc_state_delete_exit(struct sotc_state *state, uuid_t id);
+
 int sotc_state_get_entries(struct sotc_state *state,
                            struct sotc_action_ref **list);
 int sotc_state_get_exits(struct sotc_state *state,
@@ -160,9 +173,10 @@ int sotc_state_append_region(struct sotc_state *state, struct sotc_region *r);
 int sotc_state_serialize(struct sotc_state *state, json_object *region,
                         json_object **out);
 
-int sotc_state_deserialize(json_object *j_state, struct sotc_region *region,
-                          struct sotc_state **out);
-
+int sotc_state_deserialize(struct sotc_model *model,
+                           json_object *j_state,
+                           struct sotc_region *region,
+                           struct sotc_state **out);
 
 int sotc_state_set_size(struct sotc_state *s, double x, double y);
 int sotc_state_set_xy(struct sotc_state *s, double x, double y);

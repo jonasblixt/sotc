@@ -191,3 +191,247 @@ TEST(delete_missing_entry_action)
     ASSERT_EQ(rc, SOTC_OK);
     free(name);
 }
+
+TEST(add_entry_action_to_state)
+{
+    int rc;
+    struct sotc_model *model;
+    struct sotc_state *a;
+    struct sotc_action *action;
+
+    printf("Creating model\n");
+    rc = sotc_model_create(&model, "Test");
+    ASSERT_EQ(rc, SOTC_OK);
+    ASSERT(model != NULL);
+    ASSERT_EQ((char *) sotc_model_name(model), "Test");
+
+    rc = sotc_set_region_name(model->root, "Root region");
+    ASSERT_EQ(rc, SOTC_OK);
+
+    printf("Adding state\n");
+    rc = sotc_add_state(model->root, "A", &a);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_model_add_action(model, SOTC_ACTION_ENTRY,
+                                     "test-action", &action);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_state_add_entry(model, a, action->id);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_model_write("test_add_entry_to_state.sotc", model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_model_free(model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    /* Re-load model */
+
+    rc = sotc_model_load("test_add_entry_to_state.sotc", &model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    a = model->root->state;
+
+    struct sotc_action_ref *aref = NULL;
+    rc = sotc_state_get_entries(a, &aref);
+    ASSERT_EQ(rc, SOTC_OK);
+    ASSERT(aref != NULL);
+    ASSERT(aref->act != NULL);
+
+    rc = sotc_model_get_action(model, aref->act->id, SOTC_ACTION_ENTRY, &action);
+    ASSERT_EQ(rc, SOTC_OK);
+    ASSERT_EQ(action->name, "test-action");
+
+    rc = sotc_model_free(model);
+    ASSERT_EQ(rc, SOTC_OK);
+}
+
+
+TEST(delete_entry_action_from_state)
+{
+    int rc;
+    struct sotc_model *model;
+    struct sotc_state *a;
+    struct sotc_action *action;
+
+    printf("Creating model\n");
+    rc = sotc_model_create(&model, "Test");
+    ASSERT_EQ(rc, SOTC_OK);
+    ASSERT(model != NULL);
+    ASSERT_EQ((char *) sotc_model_name(model), "Test");
+
+    rc = sotc_set_region_name(model->root, "Root region");
+    ASSERT_EQ(rc, SOTC_OK);
+
+    printf("Adding state\n");
+    rc = sotc_add_state(model->root, "A", &a);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_model_add_action(model, SOTC_ACTION_ENTRY,
+                                     "test-action", &action);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_state_add_entry(model, a, action->id);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_model_write("test_delete_entry_from_state.sotc", model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_model_free(model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    /* Re-load model */
+
+    rc = sotc_model_load("test_delete_entry_from_state.sotc", &model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    a = model->root->state;
+
+    struct sotc_action_ref *aref = NULL;
+    rc = sotc_state_get_entries(a, &aref);
+    ASSERT_EQ(rc, SOTC_OK);
+    ASSERT(aref != NULL);
+    ASSERT(aref->act != NULL);
+
+    rc = sotc_state_delete_entry(a, aref->act->id);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_model_write("test_delete_entry_from_state.sotc", model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_model_free(model);
+    ASSERT_EQ(rc, SOTC_OK);
+}
+
+/* Creates three entry actions, deletes the second one */
+TEST(multiple_actions1)
+{
+    int rc;
+    struct sotc_model *model;
+    struct sotc_state *a;
+    struct sotc_action *action;
+
+    printf("Creating model\n");
+    rc = sotc_model_create(&model, "Test");
+    ASSERT_EQ(rc, SOTC_OK);
+    ASSERT(model != NULL);
+    ASSERT_EQ((char *) sotc_model_name(model), "Test");
+
+    rc = sotc_set_region_name(model->root, "Root region");
+    ASSERT_EQ(rc, SOTC_OK);
+
+    printf("Adding state\n");
+    rc = sotc_add_state(model->root, "A", &a);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    /* Add first entry action */
+    rc = sotc_model_add_action(model, SOTC_ACTION_ENTRY,
+                                     "test-action-1", &action);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_state_add_entry(model, a, action->id);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    /* Add first second action */
+    rc = sotc_model_add_action(model, SOTC_ACTION_ENTRY,
+                                     "test-action-2", &action);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_state_add_entry(model, a, action->id);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    /* Add first third action */
+    rc = sotc_model_add_action(model, SOTC_ACTION_ENTRY,
+                                     "test-action-3", &action);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_state_add_entry(model, a, action->id);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_model_write("test_multiple_actions1.sotc", model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_model_free(model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    /* Re-load model, and delete action two */
+
+    rc = sotc_model_load("test_multiple_actions1.sotc", &model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    a = model->root->state;
+
+    struct sotc_action_ref *aref = NULL;
+    rc = sotc_state_get_entries(a, &aref);
+    ASSERT_EQ(rc, SOTC_OK);
+    ASSERT(aref != NULL);
+    ASSERT(aref->act != NULL);
+
+    rc = sotc_state_delete_entry(a, aref->next->act->id);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_model_write("test_multiple_actions1_1.sotc", model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_model_free(model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    /* Re-load model, and delete action one */
+
+    rc = sotc_model_load("test_multiple_actions1_1.sotc", &model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    a = model->root->state;
+
+    aref = NULL;
+    rc = sotc_state_get_entries(a, &aref);
+    ASSERT_EQ(rc, SOTC_OK);
+    ASSERT(aref != NULL);
+    ASSERT(aref->act != NULL);
+
+    rc = sotc_state_delete_entry(a, aref->act->id);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_model_write("test_multiple_actions1_2.sotc", model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_model_free(model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    /* Re-load model, and delete action three */
+
+    rc = sotc_model_load("test_multiple_actions1_2.sotc", &model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    a = model->root->state;
+
+    aref = NULL;
+    rc = sotc_state_get_entries(a, &aref);
+    ASSERT_EQ(rc, SOTC_OK);
+    ASSERT(aref != NULL);
+    ASSERT(aref->act != NULL);
+
+    rc = sotc_state_delete_entry(a, aref->act->id);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_model_write("test_multiple_actions1_3.sotc", model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_model_free(model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    /* Re-load model, now the list should be empty */
+
+    rc = sotc_model_load("test_multiple_actions1_3.sotc", &model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    a = model->root->state;
+
+    aref = NULL;
+    rc = sotc_state_get_entries(a, &aref);
+    ASSERT_EQ(rc, SOTC_OK);
+    ASSERT(aref == NULL);
+
+    rc = sotc_model_free(model);
+    ASSERT_EQ(rc, SOTC_OK);
+}

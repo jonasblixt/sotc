@@ -82,14 +82,37 @@ int sotc_state_get_xy(struct sotc_state *s, double *x, double *y)
     return SOTC_OK;
 }
 
+static int serialize_action_list(struct sotc_action_ref *list,
+                                 json_object *output)
+{
+    json_object *action;
+    char uuid_str[37];
+    struct sotc_action_ref *tmp = list;
+
+    while (tmp) {
+        uuid_unparse(tmp->act->id, uuid_str);
+        action = json_object_new_object();
+        L_DEBUG("adding entry ref!");
+        json_object_object_add(action, "id", json_object_new_string(uuid_str));
+        json_object_array_add(output, action);
+        tmp = tmp->next;
+    }
+
+    return SOTC_OK;
+}
+
 /* Translate the internal structure to json */
 int sotc_state_serialize(struct sotc_state *state, json_object *region,
                         json_object **out)
 {
+    int rc;
     json_object *j_state = json_object_new_object();
     json_object *j_name = json_object_new_string(state->name);
     json_object *j_kind = json_object_new_string("state");
     json_object *j_region = json_object_new_array();
+
+    json_object *j_entries = json_object_new_array();
+    json_object *j_exits = json_object_new_array();
 
     json_object_object_add(j_state, "name", j_name);
     json_object_object_add(j_state, "kind", j_kind);
@@ -104,6 +127,17 @@ int sotc_state_serialize(struct sotc_state *state, json_object *region,
                 json_object_new_double(state->x));
     json_object_object_add(j_state, "y",
                 json_object_new_double(state->y));
+
+    rc = serialize_action_list(state->entries, j_entries);
+    if (rc != SOTC_OK)
+        return rc;
+
+    rc = serialize_action_list(state->exits, j_exits);
+    if (rc != SOTC_OK)
+        return rc;
+
+    json_object_object_add(j_state, "entries", j_entries);
+    json_object_object_add(j_state, "exits", j_exits);
 
     json_object_object_add(j_state, "region", j_region);
 
@@ -120,8 +154,10 @@ int sotc_state_serialize(struct sotc_state *state, json_object *region,
 }
 
 /* Translate json representation to the internal structure */
-int sotc_state_deserialize(json_object *j_state, struct sotc_region *region,
-                          struct sotc_state **out)
+int sotc_state_deserialize(struct sotc_model *model,
+                           json_object *j_state,
+                           struct sotc_region *region,
+                           struct sotc_state **out)
 {
     int rc = SOTC_OK;
     struct sotc_state *state;
@@ -167,18 +203,42 @@ int sotc_state_deserialize(json_object *j_state, struct sotc_region *region,
     else
         state->h = json_object_get_double(jobj);
 
-    if (json_object_object_get_ex(j_state, "entry", &j_entries)) {
+    state->name = strdup(json_object_get_string(j_state_name));
+    state->parent_region = region;
+
+    if (json_object_object_get_ex(j_state, "entries", &j_entries)) {
         size_t n_entries = json_object_array_length(j_entries);
 
         for (int n = 0; n < n_entries; n++)
         {
             j_entry = json_object_array_get_idx(j_entries, n);
-            L_DEBUG("Found entry: %s", json_object_get_string(j_entry));
+            json_object *j_entry_id;
+            uuid_t entry_id;
+            if (json_object_object_get_ex(j_entry, "id", &j_entry_id)) {
+                uuid_parse(json_object_get_string(j_entry_id), entry_id);
+                rc = sotc_state_add_entry(model, state, entry_id);
+                if (rc != SOTC_OK)
+                    goto err_out;
+            }
         }
     }
 
-    state->name = strdup(json_object_get_string(j_state_name));
-    state->parent_region = region;
+    if (json_object_object_get_ex(j_state, "exits", &j_exits)) {
+        size_t n_entries = json_object_array_length(j_exits);
+
+        for (int n = 0; n < n_entries; n++)
+        {
+            j_entry = json_object_array_get_idx(j_exits, n);
+            json_object *j_exit_id;
+            uuid_t exit_id;
+            if (json_object_object_get_ex(j_exit, "id", &j_exit_id)) {
+                uuid_parse(json_object_get_string(j_exit_id), exit_id);
+                rc = sotc_state_add_exit(model, state, exit_id);
+                if (rc != SOTC_OK)
+                    goto err_out;
+            }
+        }
+    }
 
     L_DEBUG("Loading state %s", state->name);
 
@@ -186,4 +246,120 @@ int sotc_state_deserialize(json_object *j_state, struct sotc_region *region,
 err_out:
     free(state);
     return rc;
+}
+
+int sotc_state_add_exit(struct sotc_model *model,
+                        struct sotc_state *state,
+                        uuid_t id)
+{
+    struct sotc_action *action;
+    int rc;
+
+    rc = sotc_model_get_action(model, id, SOTC_ACTION_EXIT, &action);
+
+    if (rc != SOTC_OK)
+        return rc;
+
+    struct sotc_action_ref *list = state->exits;
+
+    if (list == NULL) {
+        list = malloc(sizeof(struct sotc_action_ref));
+        memset(list, 0, sizeof(*list));
+        list->act = action;
+    } else {
+        while (list->next)
+            list = list->next;
+        list->next = malloc(sizeof(struct sotc_action_ref));
+        memset(list->next, 0, sizeof(*list->next));
+        list->next->act = action;
+    }
+
+    return SOTC_OK;
+}
+
+int sotc_state_add_entry(struct sotc_model *model,
+                         struct sotc_state *state,
+                         uuid_t id)
+{
+    struct sotc_action *action;
+    int rc;
+
+    rc = sotc_model_get_action(model, id, SOTC_ACTION_ENTRY, &action);
+
+    if (rc != SOTC_OK) {
+        char uuid_str[37];
+        uuid_unparse(id, uuid_str);
+        L_ERR("Unkown entry action function %s", uuid_str);
+        return rc;
+    }
+
+    L_DEBUG("Adding entry action '%s' to state '%s'", action->name, state->name);
+
+    struct sotc_action_ref *list = state->entries;
+
+    if (list == NULL) {
+        list = malloc(sizeof(struct sotc_action_ref));
+        memset(list, 0, sizeof(*list));
+        list->act = action;
+        state->entries = list;
+    } else {
+        while (list->next)
+            list = list->next;
+        list->next = malloc(sizeof(struct sotc_action_ref));
+        memset(list->next, 0, sizeof(*list->next));
+        list->next->act = action;
+    }
+
+    return SOTC_OK;
+}
+
+int sotc_state_get_entries(struct sotc_state *state,
+                           struct sotc_action_ref **list)
+{
+    (*list) = state->entries;
+    return SOTC_OK;
+}
+
+int sotc_state_get_exits(struct sotc_state *state,
+                         struct sotc_action_ref **list)
+{
+    (*list) = state->exits;
+    return SOTC_OK;
+}
+
+static int delete_action_ref(struct sotc_action_ref **list, uuid_t id)
+{
+    struct sotc_action_ref *tmp, *prev;
+
+    tmp = *list;
+    prev = NULL;
+
+    while (tmp) {
+        if (uuid_compare(tmp->act->id, id) == 0) {
+            if (prev == NULL) {
+                *list = tmp->next;
+                free(tmp);
+                return SOTC_OK;
+            } else {
+                prev->next = tmp->next;
+                free(tmp);
+                return SOTC_OK;
+            }
+        }
+
+        prev = tmp;
+        tmp = tmp->next;
+    }
+}
+
+int sotc_state_delete_entry(struct sotc_state *state,
+                            uuid_t id)
+{
+    return delete_action_ref(&state->entries, id);
+}
+
+int sotc_state_delete_exit(struct sotc_state *state,
+                            uuid_t id)
+{
+    return delete_action_ref(&state->exits, id);
 }

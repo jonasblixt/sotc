@@ -70,7 +70,7 @@ static int parse_action_list(json_object *j_list, struct sotc_action **out)
 
     L_DEBUG("no_of_actions = %zu", no_of_actions);
 
-    struct sotc_action *list = NULL;
+    struct sotc_action *list = NULL, *next;
     struct sotc_action *action;
 
     if (no_of_actions == 0) {
@@ -100,13 +100,19 @@ static int parse_action_list(json_object *j_list, struct sotc_action **out)
         action->name = strdup(json_object_get_string(j_name));
         uuid_parse(json_object_get_string(j_id), action->id);
 
+        L_DEBUG("Loaded action function '%s' %s", action->name,
+                        json_object_get_string(j_id));
+
         if (list == NULL) {
-            (*out) = action;
             list = action;
+            next = action;
         } else {
-            list->next = action;
+            next->next = action;
+            next = next->next;
         }
     }
+
+    (*out) = list;
 
     return SOTC_OK;
 }
@@ -170,7 +176,7 @@ static int parse_region(struct sotc_model *model, json_object *j_region)
             json_object *j_state_regions = NULL;
             struct sotc_state *new_state;
 
-            rc = sotc_state_deserialize(j_state, r, &new_state);
+            rc = sotc_state_deserialize(model, j_state, r, &new_state);
 
             if (rc != SOTC_OK)
             {
@@ -599,6 +605,23 @@ static int free_action_list(struct sotc_action *list)
     return SOTC_OK;
 }
 
+static int free_action_ref_list(struct sotc_action_ref *list)
+{
+    struct sotc_action_ref *item = list;
+    struct sotc_action_ref *tmp;
+
+    if (list == NULL)
+        return SOTC_OK;
+
+    while (item) {
+        tmp = item->next;
+        free(item);
+        item = tmp;
+    }
+
+    return SOTC_OK;
+}
+
 int sotc_model_free(struct sotc_model *model)
 {
     struct sotc_stack *stack, *free_stack;
@@ -655,6 +678,8 @@ int sotc_model_free(struct sotc_model *model)
         {
             L_DEBUG("Found state '%s'", s->name);
             sotc_stack_push(free_stack, s);
+            free_action_ref_list(s->entries);
+            free_action_ref_list(s->exits);
             free((void *) s->name);
 
             for (r2 = s->regions; r2; r2 = r2->next)
@@ -825,4 +850,39 @@ struct sotc_action* sotc_model_get_guards(struct sotc_model *model)
 struct sotc_action* sotc_model_get_actions(struct sotc_model *model)
 {
     return model->actions;
+}
+
+int sotc_model_get_action(struct sotc_model *model, uuid_t id,
+                          enum sotc_action_kind kind,
+                          struct sotc_action **result)
+{
+    struct sotc_action *list = NULL;
+
+    switch (kind) {
+        case SOTC_ACTION_ACTION:
+            list = model->actions;
+        break;
+        case SOTC_ACTION_GUARD:
+            list = model->guards;
+        break;
+        case SOTC_ACTION_ENTRY:
+            list = model->entries;
+        break;
+        case SOTC_ACTION_EXIT:
+            list = model->exits;
+        break;
+        default:
+            return -SOTC_ERROR;
+    }
+
+    while (list) {
+        if (uuid_compare(id, list->id) == 0) {
+            (*result) = list;
+            return SOTC_OK;
+        }
+
+        list = list->next;
+    }
+
+    return -SOTC_ERROR;
 }
