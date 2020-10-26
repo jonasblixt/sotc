@@ -208,6 +208,7 @@ int sotc_state_deserialize(struct sotc_model *model,
 
     if (json_object_object_get_ex(j_state, "entries", &j_entries)) {
         size_t n_entries = json_object_array_length(j_entries);
+        L_DEBUG("State '%s' has %d entry actions", state->name, n_entries);
 
         for (int n = 0; n < n_entries; n++)
         {
@@ -226,9 +227,10 @@ int sotc_state_deserialize(struct sotc_model *model,
     if (json_object_object_get_ex(j_state, "exits", &j_exits)) {
         size_t n_entries = json_object_array_length(j_exits);
 
+        L_DEBUG("State '%s' has %d exit actions", state->name, n_entries);
         for (int n = 0; n < n_entries; n++)
         {
-            j_entry = json_object_array_get_idx(j_exits, n);
+            j_exit = json_object_array_get_idx(j_exits, n);
             json_object *j_exit_id;
             uuid_t exit_id;
             if (json_object_object_get_ex(j_exit, "id", &j_exit_id)) {
@@ -257,15 +259,21 @@ int sotc_state_add_exit(struct sotc_model *model,
 
     rc = sotc_model_get_action(model, id, SOTC_ACTION_EXIT, &action);
 
-    if (rc != SOTC_OK)
+    if (rc != SOTC_OK) {
+        char uuid_str[37];
+        uuid_unparse(id, uuid_str);
+        L_ERR("Unkown exit action function %s", uuid_str);
         return rc;
+    }
 
+    L_DEBUG("Adding exit action '%s' to state '%s'", action->name, state->name);
     struct sotc_action_ref *list = state->exits;
 
     if (list == NULL) {
         list = malloc(sizeof(struct sotc_action_ref));
         memset(list, 0, sizeof(*list));
         list->act = action;
+        state->exits = list;
     } else {
         while (list->next)
             list = list->next;

@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include <sotc/sotc.h>
 #include <sotc/model.h>
@@ -37,9 +39,6 @@ int sotc_canvas_render_state(cairo_t *cr, struct sotc_state *state)
     cairo_close_path(cr);
     cairo_fill_preserve(cr);
 
-    cairo_move_to (cr, x, y + 30);
-    if (state->regions)
-        cairo_line_to(cr, x + w, y + 30);
     cairo_set_font_size (cr, 18);
     cairo_set_source_rgb (cr, 0,0,0);
 
@@ -58,6 +57,43 @@ int sotc_canvas_render_state(cairo_t *cr, struct sotc_state *state)
     if (!clip_text) {
         cairo_move_to (cr, lbl_x, lbl_y);
         cairo_show_text (cr, state->name);
+    }
+
+    double y_offset = 0.0;
+
+    if (state->entries || state->exits) {
+        y_offset = 50.0;
+        cairo_move_to (cr, x, y + 30);
+        cairo_line_to(cr, x + w, y + 30);
+    } else {
+        y_offset = 30;
+    }
+
+    /* Render entry actions */
+    struct sotc_action_ref *entry;
+    sotc_state_get_entries(state, &entry);
+    char action_str_buf[128];
+
+    for (;entry; entry = entry->next) {
+        snprintf(action_str_buf, sizeof(action_str_buf),
+                    "entry/ %s", entry->act->name);
+        cairo_move_to(cr, x + 10, y + y_offset);
+        cairo_show_text(cr, action_str_buf);
+        y_offset += 20;
+    }
+
+    sotc_state_get_exits(state, &entry);
+    for (;entry; entry = entry->next) {
+        snprintf(action_str_buf, sizeof(action_str_buf),
+                    "exit/ %s", entry->act->name);
+        cairo_move_to(cr, x + 10, y + y_offset);
+        cairo_show_text(cr, action_str_buf);
+        y_offset += 20;
+    }
+
+    if (state->regions) {
+        cairo_move_to (cr, x, y + y_offset);
+        cairo_line_to(cr, x + w, y + y_offset);
     }
 
     if (state->focus)
@@ -80,5 +116,6 @@ int sotc_canvas_render_state(cairo_t *cr, struct sotc_state *state)
         cairo_restore(cr);
     }
 
+    state->region_y_offset = y_offset - 30.0;
     return 0;
 }

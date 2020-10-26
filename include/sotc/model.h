@@ -87,6 +87,7 @@ struct sotc_state
     double y;
     double w;
     double h;
+    double region_y_offset;
     bool focus;
     enum sotc_state_kind kind;
     struct sotc_action_ref *entries;
