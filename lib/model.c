@@ -117,6 +117,64 @@ static int parse_action_list(json_object *j_list, struct sotc_action **out)
     return SOTC_OK;
 }
 
+
+static int parse_triggers(json_object *j_list, struct sotc_model *model)
+{
+    size_t no_of_triggers = json_object_array_length(j_list);
+    json_object *j_trigger;
+    json_object *j_name;
+    json_object *j_id;
+
+    L_DEBUG("no_of_triggers = %zu", no_of_triggers);
+
+    struct sotc_trigger *list = NULL, *next;
+    struct sotc_trigger *trigger;
+
+    if (no_of_triggers == 0) {
+        model->triggers = NULL;
+        return SOTC_OK;
+    }
+
+    for (int n = 0; n < no_of_triggers; n++) {
+        j_trigger = json_object_array_get_idx(j_list, n);
+
+        if (!json_object_object_get_ex(j_trigger, "name", &j_name)) {
+            L_ERR("Could not read name property\n");
+            return -SOTC_ERROR;
+        }
+
+        if (!json_object_object_get_ex(j_trigger, "id", &j_id)) {
+            L_ERR("Could not read id property\n");
+            return -SOTC_ERROR;
+        }
+
+        trigger = malloc(sizeof(*trigger));
+
+        if (trigger == NULL)
+            return -SOTC_ERROR;
+
+        memset(trigger, 0, sizeof(*trigger));
+
+        trigger->name = strdup(json_object_get_string(j_name));
+        uuid_parse(json_object_get_string(j_id), trigger->id);
+
+        L_DEBUG("Loaded trigger '%s' %s", trigger->name,
+                                          json_object_get_string(j_id));
+
+        if (list == NULL) {
+            list = trigger;
+            next = trigger;
+        } else {
+            next->next = trigger;
+            next = next->next;
+        }
+    }
+
+    model->triggers = list;
+
+    return SOTC_OK;
+}
+
 static int parse_region(struct sotc_model *model, json_object *j_region)
 {
     int rc = SOTC_OK;
@@ -270,6 +328,10 @@ static int sotc_model_parse(struct sotc_model *model)
         {
             rc = parse_action_list(val, &model->guards);
         }
+        else if (strcmp(key, "triggers") == 0)
+        {
+            rc = parse_triggers(val, model);
+        }
         else if (strcmp(key, "region") == 0)
         {
             found_region = true;
@@ -418,6 +480,33 @@ static int serialize_action_list(struct sotc_action *list,
     return SOTC_OK;
 }
 
+static int serialize_trigger_list(struct sotc_model *model,
+                                 json_object **out)
+{
+    struct sotc_trigger *item = model->triggers;
+    char uuid_str[37];
+
+    json_object *triggers = json_object_new_array();
+    json_object *trigger;
+    json_object *name;
+    json_object *id;
+
+    while (item) {
+        trigger = json_object_new_object();
+        name = json_object_new_string(item->name);
+        uuid_unparse(item->id, uuid_str);
+        id = json_object_new_string(uuid_str);
+
+        json_object_object_add(trigger, "name", name);
+        json_object_object_add(trigger, "id", id);
+        json_object_array_add(triggers, trigger);
+        item = item->next;
+    }
+
+    (*out) = triggers;
+    return SOTC_OK;
+}
+
 int sotc_model_create(struct sotc_model **model_pp, const char *name)
 {
     struct sotc_model *model = NULL;
@@ -540,6 +629,17 @@ int sotc_model_write(const char *filename, struct sotc_model *model)
         goto err_free_out;
     }
 
+    /* Serialize triggers */
+    json_object *j_triggers;
+
+    rc = serialize_trigger_list(model, &j_triggers);
+
+    if (rc != SOTC_OK)
+    {
+        L_ERR("Triggers serialization failed");
+        goto err_free_out;
+    }
+
     /* Create the model root object */
 
     json_object *jr = json_object_new_object();
@@ -550,6 +650,7 @@ int sotc_model_write(const char *filename, struct sotc_model *model)
     json_object_object_add(jr, "kind", jr_kind);
     json_object_object_add(jr, "version", jr_version);
     json_object_object_add(jr, "name", jr_name);
+    json_object_object_add(jr, "triggers", j_triggers);
     json_object_object_add(jr, "actions", j_actions);
     json_object_object_add(jr, "entries", j_entries);
     json_object_object_add(jr, "exits", j_exits);
@@ -622,6 +723,24 @@ static int free_action_ref_list(struct sotc_action_ref *list)
     return SOTC_OK;
 }
 
+static int free_triggers(struct sotc_model *model)
+{
+    struct sotc_trigger *item = model->triggers;
+    struct sotc_trigger *tmp;
+
+    if (item == NULL)
+        return SOTC_OK;
+
+    while (item) {
+        tmp = item->next;
+        free((void *) item->name);
+        free(item);
+        item = tmp;
+    }
+
+    return SOTC_OK;
+}
+
 int sotc_model_free(struct sotc_model *model)
 {
     struct sotc_stack *stack, *free_stack;
@@ -659,6 +778,12 @@ int sotc_model_free(struct sotc_model *model)
 
     L_DEBUG("Freeing guards");
     rc = free_action_list(model->guards);
+
+    if (rc != SOTC_OK)
+        return rc;
+
+    L_DEBUG("Freeing triggers");
+    rc = free_triggers(model);
 
     if (rc != SOTC_OK)
         return rc;
@@ -885,4 +1010,100 @@ int sotc_model_get_action(struct sotc_model *model, uuid_t id,
     }
 
     return -SOTC_ERROR;
+}
+
+int sotc_model_add_trigger(struct sotc_model *model, const char *name,
+                           struct sotc_trigger **out)
+{
+    int rc = SOTC_OK;
+    struct sotc_trigger *trigger;
+    struct sotc_trigger *list, **dest;
+
+    trigger = malloc(sizeof(struct sotc_trigger));
+
+    if (trigger == NULL)
+        return -SOTC_ERROR;
+
+    memset(trigger, 0, sizeof(*trigger));
+
+    uuid_generate_random(trigger->id);
+    trigger->name = strdup(name);
+    list = model->triggers;
+
+    if (list == NULL) {
+        list = trigger;
+        model->triggers = list;
+    } else {
+        while (list->next != NULL)
+            list = list->next;
+        list->next = trigger;
+    }
+
+    if (out) {
+        (*out) = trigger;
+    }
+
+    return rc;
+err_free_out:
+    free((void *) trigger->name);
+    free(trigger);
+    return rc;
+}
+
+int sotc_model_delete_trigger(struct sotc_model *model, uuid_t id)
+{
+    bool found_item = false;
+    struct sotc_trigger *list = model->triggers;
+    struct sotc_trigger *item = list;
+    struct sotc_trigger *prev, *next;
+
+    prev = NULL;
+
+    while (item) {
+        next = item->next;
+
+        if (uuid_compare(item->id, id) == 0) {
+            if (prev)
+                prev->next = next;
+
+            /* If this is the first and only item, set input to NULL */
+            if (item == model->triggers)
+                model->triggers = NULL;
+
+            free((void *) item->name);
+            memset(item, 0, sizeof(*item));
+            free(item);
+            found_item = true;
+        }
+
+        prev = item;
+        item = item->next;
+    }
+
+    if (found_item)
+        return SOTC_OK;
+    else
+        return -SOTC_ERROR;
+}
+
+int sotc_model_get_trigger(struct sotc_model *model, uuid_t id,
+                           struct sotc_trigger **out)
+{
+    struct sotc_trigger *list = model->triggers;
+
+    while (list) {
+        if (uuid_compare(id, list->id) == 0) {
+            (*out) = list;
+            return SOTC_OK;
+        }
+
+        list = list->next;
+    }
+
+    return -SOTC_ERROR;
+}
+
+struct sotc_trigger* sotc_model_get_triggers(struct sotc_model *model)
+{
+    return model->triggers;
 }

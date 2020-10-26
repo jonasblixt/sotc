@@ -96,7 +96,7 @@ int main(int argc, char **argv)
         L_ERR("Could not initialize state drawing canvas");
         goto err_out;
     }
-
+/*
     rc = sotc_object_tree_init(&object_tree);
 
     if (rc != SOTC_OK)
@@ -104,12 +104,12 @@ int main(int argc, char **argv)
         L_ERR("Could not initialize object tree");
         goto err_out;
     }
-
+*/
     gtk_widget_set_size_request(object_tree, 300, -1);
 
     GtkWidget *hpane = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
 
-    gtk_paned_add1(GTK_PANED(hpane), object_tree);
+    //gtk_paned_add1(GTK_PANED(hpane), object_tree);
     gtk_paned_add2(GTK_PANED(hpane), state_canvas);
 
     gtk_box_pack_start(GTK_BOX(center_vbox), hpane, TRUE, TRUE, 0);
@@ -123,7 +123,7 @@ int main(int argc, char **argv)
         goto err_out;
     }
 
-    sotc_object_tree_update(model);
+    //sotc_object_tree_update(model);
     sotc_state_canvas_update(model, NULL);
 
     gtk_widget_show_all(window);

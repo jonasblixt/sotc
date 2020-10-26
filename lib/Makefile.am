@@ -4,6 +4,7 @@ libsotc_la_SOURCES = sotc.c \
                     stack.c \
                     model.c \
                     state.c \
+                    transition.c \
                     region.c
 
 libsotc_la_CFLAGS = -I$(top_srcdir)/include \

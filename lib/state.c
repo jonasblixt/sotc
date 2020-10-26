@@ -371,3 +371,22 @@ int sotc_state_delete_exit(struct sotc_state *state,
 {
     return delete_action_ref(&state->exits, id);
 }
+
+int sotc_state_add_transition(struct sotc_state *source,
+                              struct sotc_state *dest,
+                              struct sotc_transition **transition)
+{
+    return SOTC_OK;
+}
+
+int sotc_state_delete_transition(struct sotc_state *source,
+                                 struct sotc_transition *transition)
+{
+    return SOTC_OK;
+}
+
+int sotc_state_get_transitions(struct sotc_state *state,
+                               struct sotc_transition **transitions)
+{
+    return SOTC_OK;
+}
