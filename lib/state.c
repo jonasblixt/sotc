@@ -106,14 +106,19 @@ int sotc_state_serialize(struct sotc_state *state, json_object *region,
                         json_object **out)
 {
     int rc;
+    char s_uuid_str[37];
     json_object *j_state = json_object_new_object();
     json_object *j_name = json_object_new_string(state->name);
     json_object *j_kind = json_object_new_string("state");
     json_object *j_region = json_object_new_array();
 
+    uuid_unparse(state->id, s_uuid_str);
+    json_object *j_id = json_object_new_string(s_uuid_str);;
+
     json_object *j_entries = json_object_new_array();
     json_object *j_exits = json_object_new_array();
 
+    json_object_object_add(j_state, "id", j_id);
     json_object_object_add(j_state, "name", j_name);
     json_object_object_add(j_state, "kind", j_kind);
 
@@ -169,12 +174,21 @@ int sotc_state_deserialize(struct sotc_model *model,
     json_object *j_exits = NULL;
     json_object *j_entry = NULL;
     json_object *j_exit = NULL;
+    json_object *j_id = NULL;
     json_object *jobj;
 
     state = malloc(sizeof(struct sotc_state));
     memset(state, 0, sizeof(*state));
 
     (*out) = state;
+
+    if (!json_object_object_get_ex(j_state, "id", &j_id)) {
+        L_ERR("Could not read ID");
+        rc = -SOTC_ERR_PARSE;
+        goto err_out;
+    }
+
+    uuid_parse(json_object_get_string(j_id), state->id);
 
     if (!json_object_object_get_ex(j_state, "name", &j_state_name))
     {

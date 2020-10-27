@@ -69,11 +69,17 @@ int sotc_region_get_height(struct sotc_region *r, double *h)
 int sotc_region_serialize(struct sotc_region *region, json_object *state,
                          json_object **out)
 {
+    char r_uuid_str[37];
     json_object *j_region = json_object_new_object();
     json_object *j_name = json_object_new_string(region->name);
     json_object *j_offpage = json_object_new_boolean(false);
     json_object *j_states = json_object_new_array();
 
+    uuid_unparse(region->id, r_uuid_str);
+    json_object *j_id = json_object_new_string(r_uuid_str);
+
+
+    json_object_object_add(j_region, "id", j_id);
     json_object_object_add(j_region, "name", j_name);
     json_object_object_add(j_region, "off_page", j_offpage);
     json_object_object_add(j_region, "height",
@@ -102,6 +108,7 @@ int sotc_region_deserialize(json_object *j_r, struct sotc_state *state,
                             struct sotc_region **out)
 {
     json_object *jobj;
+    json_object *j_id;
     struct sotc_region *r;
 
     r = malloc(sizeof(struct sotc_region));
@@ -124,6 +131,13 @@ int sotc_region_deserialize(json_object *j_r, struct sotc_state *state,
         r->h = 0.0;
     else
         r->h = json_object_get_double(jobj);
+
+    if (!json_object_object_get_ex(j_r, "id", &j_id)) {
+        L_ERR("Could not read id");
+        return -SOTC_ERROR;
+    }
+
+    uuid_parse(json_object_get_string(j_id), r->id);
 
     r->parent_state = state;
 

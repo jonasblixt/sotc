@@ -34,11 +34,13 @@
         },
   ],
   "region":{
+    "id":"1b5e0881-f6a0-4dc4-b226-45d61bcc6ab6",
     "name":"Root region",
     "off_page":false,
     "height":-1,
     "states":[
       {
+        "id":"aafece16-4e8c-4f4c-b8c6-c96b650450f4",
         "name":"A",
         "kind":"state",
         "width":310,
@@ -61,10 +63,45 @@
             "id":"3bfebe4b-897b-47a3-b405-465f5de3c74d"
           }
         ],
+        "transitions":[
+            {
+                "id":"818c7f54-4f1d-45df-8433-b7ca3ce8a0ac",
+                "trigger":"8cae81f9-1e69-464b-9a66-2077c76d4965",
+                "start": {
+                    "state":"aafece16-4e8c-4f4c-b8c6-c96b650450f4",
+                    "edge":"right",
+                    "offset":20.0,
+                },
+                "end": {
+                    "state":"13b4423c-396e-4ed6-8310-5e34af82f40b",
+                    "edge":"left",
+                    "offset":20.0,
+                },
+                "text-block": {
+                    "x": 10.0,
+                    "y": 10.0,
+                    "w": 100.0,
+                    "h": 50.0,
+                },
+                "vertices":[
+                ],
+                "guards":[
+                ],
+                "actions":[
+                ],
+                "state-condition":[
+                    {
+                        "id":"3ed4ee62-9a8f-4e9d-8021-7ccc969c2954",
+                        "positive":"false"
+                    },
+                ]
+            }
+        ],
         "region":[
         ]
       },
       {
+        "id":"13b4423c-396e-4ed6-8310-5e34af82f40b",
         "name":"The quick brown fox is clipped ÅÄÖ",
         "kind":"state",
         "width":380,
@@ -75,6 +112,7 @@
         ]
       },
       {
+        "id":"46a45159-8a77-43f1-8555-312c64ca4d0e",
         "name":"C",
         "kind":"state",
         "width":1110,
@@ -83,11 +121,13 @@
         "y":340,
         "region":[
           {
+            "id":"7cd9ed2d-9275-4c5e-9fc9-17769be95ab9",
             "name":"Another region",
             "off_page":false,
             "height":-1,
             "states":[
               {
+                "id":"f563a16b-d36d-49bf-8106-39b0c0fddcbc",
                 "name":"C1",
                 "kind":"state",
                 "width":100,
@@ -98,6 +138,7 @@
                 ]
               },
               {
+                "id":"33ca7c77-847d-4cf2-9685-c036562855a6",
                 "name":"C2",
                 "kind":"state",
                 "width":100,
@@ -108,6 +149,7 @@
                 ]
               },
               {
+                "id":"f8bdd1ba-60c7-42d0-9c9c-53f38ed50462",
                 "name":"C3",
                 "kind":"state",
                 "width":450,
@@ -124,11 +166,13 @@
                 ],
                 "region":[
                   {
+                    "id":"821371f6-a22c-4970-9d7e-e33c8101e89d",
                     "name":"Yet another region",
                     "off_page":false,
                     "height":-1,
                     "states":[
                       {
+                        "id":"3ed4ee62-9a8f-4e9d-8021-7ccc969c2954",
                         "name":"C31",
                         "kind":"state",
                         "width":100,
@@ -139,6 +183,7 @@
                         ]
                       },
                       {
+                        "id":"e0cc137f-7277-4d97-8c66-b882aef8d718",
                         "name":"C32",
                         "kind":"state",
                         "width":100,
@@ -149,6 +194,7 @@
                         ]
                       },
                       {
+                        "id":"4c786c14-ff23-4ac3-927f-8c868de8b3bb",
                         "name":"C33",
                         "kind":"state",
                         "width":100,
