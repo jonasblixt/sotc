@@ -37,6 +37,14 @@ enum sotc_action_kind
     SOTC_ACTION_EXIT,
 };
 
+enum sotc_side
+{
+    SOTC_SIDE_LEFT,
+    SOTC_SIDE_RIGHT,
+    SOTC_SIDE_TOP,
+    SOTC_SIDE_BOTTOM,
+};
+
 struct sotc_action
 {
     uuid_t id;
@@ -58,22 +66,47 @@ struct sotc_trigger
     struct sotc_trigger *next;
 };
 
-struct sotc_trigger_ref
+struct sotc_vertice
 {
-    struct sotc_trigger *trigger;
-    struct sotc_trigger_ref *next;
+    double x;
+    double y;
+    struct sotc_vertice *next;
+};
+
+struct sotc_transition_state_ref
+{
+    struct sotc_state *state;
+    double offset;
+    enum sotc_side side;
+};
+
+struct sotc_coords
+{
+    double x;
+    double y;
+    double w;
+    double h;
+};
+
+struct sotc_transition_state_condition
+{
+    struct sotc_state *state;
+    bool positive;
+    struct sotc_transition_state_condition *next;
 };
 
 struct sotc_transition
 {
     uuid_t id;
-    const char *name;
-    struct sotc_trigger_ref *trigger;
+    struct sotc_trigger *trigger;
     enum sotc_transition_kind kind;
     struct sotc_action_ref *action;
     struct sotc_action_ref *guard;
-    struct sotc_state *source;
-    struct sotc_state *dest;
+    struct sotc_transition_state_ref source;
+    struct sotc_transition_state_ref dest;
+    struct sotc_coords text_block_coords;
+    struct sotc_vertice *vertices;
+    struct sotc_transition_state_condition *state_conditions;
     struct sotc_transition *next;
 };
 
@@ -85,7 +118,6 @@ struct sotc_region
     double h;
     bool focus;
     struct sotc_state *state;
-    struct sotc_transition *transition;
     struct sotc_state *parent_state;
     struct sotc_state *last_state;
     struct sotc_region *next;
@@ -102,6 +134,7 @@ struct sotc_state
     double region_y_offset;
     bool focus;
     enum sotc_state_kind kind;
+    struct sotc_transition *transition;
     struct sotc_action_ref *entries;
     struct sotc_action_ref *exits;
     struct sotc_region *regions;
@@ -147,6 +180,13 @@ struct sotc_action* sotc_model_get_exits(struct sotc_model *model);
 struct sotc_action* sotc_model_get_guards(struct sotc_model *model);
 struct sotc_action* sotc_model_get_actions(struct sotc_model *model);
 struct sotc_trigger* sotc_model_get_triggers(struct sotc_model *model);
+
+struct sotc_state *sotc_model_get_state_from_uuid(struct sotc_model *model,
+                                                  uuid_t id);
+
+struct sotc_trigger * sotc_model_get_trigger_from_uuid(struct sotc_model *model,
+                                                       uuid_t id);
+int free_action_ref_list(struct sotc_action_ref *list);
 
 /* Region api */
 int sotc_add_region(struct sotc_state *state, bool off_page,
@@ -211,24 +251,41 @@ int sotc_state_set_xy(struct sotc_state *s, double x, double y);
 int sotc_state_get_size(struct sotc_state *s, double *x, double *y);
 int sotc_state_get_xy(struct sotc_state *s, double *x, double *y);
 
+
 const char * sotc_model_name(struct sotc_model *model);
 
 /* Transition API */
-int sotc_transition_set_trigger(struct sotc_transition *transition, uuid_t id);
+int sotc_transition_deserialize(struct sotc_model *model,
+                                struct sotc_state *state,
+                                json_object *j_object);
 
-int sotc_transition_add_guard(struct sotc_transition *transition, uuid_t id);
+int sotc_transition_set_trigger(struct sotc_model *model,
+                                struct sotc_transition *transition,
+                                uuid_t id);
+
+int sotc_transition_add_guard(struct sotc_model *model,
+                              struct sotc_transition *transition,
+                              uuid_t id);
+
 int sotc_transition_delete_guard(struct sotc_transition *transition, uuid_t id);
 struct sotc_action_ref *sotc_transition_get_guards(struct sotc_transition *t);
 
-int sotc_transition_add_action(struct sotc_transition *transition, uuid_t id);
+int sotc_transition_add_action(struct sotc_model *model,
+                               struct sotc_transition *transition,
+                               uuid_t id);
+
 int sotc_transition_delete_action(struct sotc_transition *transition, uuid_t id);
 struct sotc_action_ref *sotc_transition_get_actions(struct sotc_transition *t);
 
-int sotc_transition_add_state_condition(struct sotc_transition *transition,
-                                        uuid_t id, bool positive);
+int sotc_transition_add_state_condition(struct sotc_model *model,
+                                        struct sotc_transition *transition,
+                                        uuid_t id,
+                                        bool positive);
+
 int sotc_transition_delete_state_condition(struct sotc_transition *transition,
                                             uuid_t id);
 struct sotc_state_ref *sotc_transition_get_state_conditions(struct sotc_transition *t);
 
+int sotc_transition_free(struct sotc_transition *transition);
 
 #endif  // INCLUDE_SOTC_MODEL_H_

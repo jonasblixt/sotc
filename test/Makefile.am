@@ -5,7 +5,7 @@ COMMON_TEST_CFLAGS = -I $(top_srcdir)/include \
                      $(JSONC_CFLAGS) \
                      $(UUID_CFLAGS) \
                      -DSOTC_TEST_SRC=\"$(abs_top_srcdir)/test/\" \
-                     -g -O0 \
+                     -no-pie -g -O0 \
                      -fno-omit-frame-pointer
 
 COMMON_TEST_LDADD = libnala.la \
@@ -22,6 +22,7 @@ check_PROGRAMS = test1 \
                  test_stack \
                  test_model \
                  test_actions \
+                 test_transitions \
                  test_triggers
 
 test1_SOURCES = common.c test1.c
@@ -44,8 +45,13 @@ test_triggers_SOURCES = common.c test_triggers.c
 test_triggers_LDADD = $(COMMON_TEST_LDADD)
 test_triggers_CFLAGS = $(COMMON_TEST_CFLAGS)
 
+test_transitions_SOURCES = common.c test_transitions.c
+test_transitions_LDADD = $(COMMON_TEST_LDADD)
+test_transitions_CFLAGS = $(COMMON_TEST_CFLAGS)
+
 TESTS = test1 \
         test_stack \
         test_model \
         test_actions \
-        test_triggers
+        test_triggers \
+        test_transitions

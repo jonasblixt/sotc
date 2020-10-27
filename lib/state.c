@@ -19,6 +19,8 @@ int sotc_add_state(struct sotc_region *region, const char *name,
 
     state->name = strdup(name);
 
+    uuid_generate_random(state->id);
+
     if (region->last_state)
         region->last_state->next = state;
     if (!region->state)
@@ -113,7 +115,7 @@ int sotc_state_serialize(struct sotc_state *state, json_object *region,
     json_object *j_region = json_object_new_array();
 
     uuid_unparse(state->id, s_uuid_str);
-    json_object *j_id = json_object_new_string(s_uuid_str);;
+    json_object *j_id = json_object_new_string(s_uuid_str);
 
     json_object *j_entries = json_object_new_array();
     json_object *j_exits = json_object_new_array();
@@ -233,7 +235,7 @@ int sotc_state_deserialize(struct sotc_model *model,
                 uuid_parse(json_object_get_string(j_entry_id), entry_id);
                 rc = sotc_state_add_entry(model, state, entry_id);
                 if (rc != SOTC_OK)
-                    goto err_out;
+                    goto err_free_name_out;
             }
         }
     }
@@ -251,15 +253,28 @@ int sotc_state_deserialize(struct sotc_model *model,
                 uuid_parse(json_object_get_string(j_exit_id), exit_id);
                 rc = sotc_state_add_exit(model, state, exit_id);
                 if (rc != SOTC_OK)
-                    goto err_out;
+                    goto err_free_name_out;
             }
         }
     }
+/*
+    if (json_object_object_get_ex(j_state, "transitions", &jobj)) {
+        rc = sotc_transition_deserialize(model, state, jobj);
 
+        if (rc != SOTC_OK) {
+            L_ERR("Could not de-serialize transition table");
+            goto err_free_name_out;
+        }
+    }
+*/
     L_DEBUG("Loading state %s", state->name);
 
     return rc;
+err_free_name_out:
+    free((void *) state->name);
 err_out:
+    free_action_ref_list(state->entries);
+    free_action_ref_list(state->exits);
     free(state);
     return rc;
 }

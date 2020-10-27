@@ -175,7 +175,7 @@ static int parse_triggers(json_object *j_list, struct sotc_model *model)
     return SOTC_OK;
 }
 
-static int parse_region(struct sotc_model *model, json_object *j_region)
+static int parse_root_region(struct sotc_model *model, json_object *j_region)
 {
     int rc = SOTC_OK;
     json_object *jobj;
@@ -192,7 +192,8 @@ static int parse_region(struct sotc_model *model, json_object *j_region)
     if (rc != SOTC_OK)
         return rc;
 
-    /* Populate stack with the root region */
+    L_DEBUG("Pass 1...");
+    /* Pass 1: Populate stack with the root region */
     push_jr_s_pair(stack, j_region, NULL);
 
     while (pop_jr_s_pair(stack, &j_r, &state) == SOTC_OK)
@@ -273,6 +274,78 @@ static int parse_region(struct sotc_model *model, json_object *j_region)
         }
     }
 
+    L_DEBUG("Pass 2...");
+    /* Pass 2: Parse all transitions */
+    sotc_stack_push(stack, (void *) j_region);
+
+    while (sotc_stack_pop(stack, (void **) &j_r) == SOTC_OK)
+    {
+        L_DEBUG("Parsing region");
+
+        if (!json_object_object_get_ex(j_r, "states", &jobj))
+        {
+            L_DEBUG("No states found in region");
+            continue;
+        }
+
+        size_t n_elements = json_object_array_length(jobj);
+
+        L_DEBUG("Array elements = %zu", n_elements);
+
+        /* Iterate over all states in region 'j_r' */
+        for (int i = 0; i < n_elements; i++)
+        {
+            json_object *j_state = json_object_array_get_idx(jobj, i);
+            json_object *j_state_regions = NULL;
+            json_object *j_transitions;
+            json_object *j_state_id;
+            uuid_t state_uu;
+            struct sotc_state *state;
+
+            json_object_object_get_ex(j_state, "id", &j_state_id);
+            L_DEBUG("Pass 2: %s", json_object_get_string(j_state_id));
+            uuid_parse(json_object_get_string(j_state_id), state_uu);
+
+            if (json_object_object_get_ex(j_state, "transitions", &j_transitions)) {
+                state = sotc_model_get_state_from_uuid(model, state_uu);
+                if (state == NULL) {
+                    L_ERR("Could not get state");
+                    rc = -SOTC_ERROR;
+                    goto err_parse_error;
+                }
+
+                rc = sotc_transition_deserialize(model, state, j_transitions);
+
+                if (rc != SOTC_OK) {
+                    L_ERR("Could not de-serialize transition");
+                    goto err_parse_error;
+                }
+            }
+
+            if (!json_object_object_get_ex(j_state, "region", &j_state_regions))
+            {
+                L_DEBUG("No regions found in state");
+                continue;
+            }
+
+            size_t n_regions = json_object_array_length(j_state_regions);
+
+            /* Iterate over all regions in state*/
+            for (int n = 0; n < n_regions; n++)
+            {
+                rc = sotc_stack_push(stack,
+                    (void *) json_object_array_get_idx(j_state_regions, n));
+
+                if (rc != SOTC_OK)
+                {
+                    L_ERR("Could not push to stack, aborting");
+                    rc = -SOTC_ERR_PARSE;
+                    goto err_parse_error;
+                }
+            }
+        }
+    }
+
     L_DEBUG("Parse end");
 
 err_parse_error:
@@ -336,7 +409,7 @@ static int sotc_model_parse(struct sotc_model *model)
         {
             found_region = true;
             /* Process region*/
-            rc = parse_region(model, val);
+            rc = parse_root_region(model, val);
 
             if (rc != SOTC_OK)
                 break;
@@ -427,29 +500,40 @@ int sotc_model_load(const char *filename, struct sotc_model **model_pp)
     L_DEBUG("Successfuly parsed json model");
 
     json_tokener_free(tok);
+    tok = NULL;
     free(raw_json_data);
+    raw_json_data = NULL;
     fclose(fp);
+    fp = NULL;
 
     rc = sotc_model_parse(model);
 
     if (rc != SOTC_OK)
     {
         L_ERR("Parse error");
-        goto err_free_json;
+        goto err_free_model;
     }
 
     return SOTC_OK;
 
-err_free_json:
-    json_object_put(model->jroot);
 err_free_json_tok:
-    json_tokener_free(tok);
+    if (tok) {
+        L_DEBUG("Freeing json tokenizer");
+        json_tokener_free(tok);
+    }
 err_free_json_data:
-    free(raw_json_data);
+    if (raw_json_data) {
+        L_DEBUG("Freeing raw_json_data");
+        free(raw_json_data);
+    }
 err_close_fp:
-    fclose(fp);
+    if (fp) {
+        L_DEBUG("Closing fd");
+        fclose(fp);
+    }
 err_free_model:
-    free(model);
+    L_DEBUG("Free model");
+    sotc_model_free(model);
     return rc;
 }
 
@@ -706,7 +790,7 @@ static int free_action_list(struct sotc_action *list)
     return SOTC_OK;
 }
 
-static int free_action_ref_list(struct sotc_action_ref *list)
+int free_action_ref_list(struct sotc_action_ref *list)
 {
     struct sotc_action_ref *item = list;
     struct sotc_action_ref *tmp;
@@ -805,6 +889,7 @@ int sotc_model_free(struct sotc_model *model)
             sotc_stack_push(free_stack, s);
             free_action_ref_list(s->entries);
             free_action_ref_list(s->exits);
+            sotc_transition_free(s->transition);
             free((void *) s->name);
 
             for (r2 = s->regions; r2; r2 = r2->next)
@@ -1106,4 +1191,53 @@ int sotc_model_get_trigger(struct sotc_model *model, uuid_t id,
 struct sotc_trigger* sotc_model_get_triggers(struct sotc_model *model)
 {
     return model->triggers;
+}
+
+struct sotc_state *sotc_model_get_state_from_uuid(struct sotc_model *model,
+                                                  uuid_t id)
+{
+    int rc;
+    struct sotc_region *r, *r2;
+    struct sotc_state *s;
+    static struct sotc_stack *stack;
+
+    rc = sotc_stack_init(&stack, SOTC_MAX_R_S);
+
+    if (rc != SOTC_OK) {
+        L_ERR("Could not init stack");
+        return NULL;
+    }
+
+    rc = sotc_stack_push(stack, (void *) model->root);
+
+    while (sotc_stack_pop(stack, (void *) &r) == SOTC_OK) {
+        for (s = r->state; s; s = s->next) {
+            if (uuid_compare(s->id, id) == 0) {
+                goto search_out;
+            }
+
+            for (r2 = s->regions; r2; r2 = r2->next) {
+                sotc_stack_push(stack, (void *) r2);
+            }
+        }
+    }
+
+search_out:
+    sotc_stack_free(stack);
+    return s;
+}
+
+struct sotc_trigger * sotc_model_get_trigger_from_uuid(struct sotc_model *model,
+                                                       uuid_t id)
+{
+    struct sotc_trigger *list = model->triggers;
+
+    while (list) {
+        if (uuid_compare(list->id, id) == 0) {
+            return list;
+        }
+        list = list->next;
+    }
+
+    return NULL;
 }

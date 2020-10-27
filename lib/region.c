@@ -17,6 +17,8 @@ int sotc_add_region(struct sotc_state *state, bool off_page,
 
     (*out) = region;
 
+    uuid_generate_random(region->id);
+
     if (state->last_region)
         state->last_region->next = region;
     if (!state->regions)
