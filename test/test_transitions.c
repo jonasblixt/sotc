@@ -122,3 +122,90 @@ TEST(create_one_transition)
     rc = sotc_model_free(model);
     ASSERT_EQ(rc, SOTC_OK);
 }
+
+TEST(create_multiple_transitions)
+{
+    int rc;
+    struct sotc_model *model;
+    struct sotc_state *a, *b;
+    struct sotc_transition *t1, *t2, *t3;
+    struct sotc_trigger *trigger1, *trigger2;
+
+    rc = sotc_model_create(&model, "create_multiple_transitions1");
+    ASSERT_EQ(rc, SOTC_OK);
+    ASSERT(model != NULL);
+
+    /* Create states A and B */
+    printf("Creating states\n");
+    rc = sotc_add_state(model->root, "A", &a);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_add_state(model->root, "B", &b);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    /* Create transitions between A and B */
+    printf("Creating transitions\n");
+    rc = sotc_state_add_transition(a, b, &t1);
+    ASSERT_EQ(rc, SOTC_OK);
+    rc = sotc_state_add_transition(a, b, &t2);
+    ASSERT_EQ(rc, SOTC_OK);
+    rc = sotc_state_add_transition(b, a, &t3);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    /* Create a trigger and assign it to transition 't' */
+    printf("Creating triggers\n");
+    rc = sotc_model_add_trigger(model, "eTestTrigger1", &trigger1);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_model_add_trigger(model, "eTestTrigger2", &trigger2);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    printf("Assigning triggers\n");
+    rc = sotc_transition_set_trigger(model, t1, trigger1);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_transition_set_trigger(model, t2, trigger2);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_transition_set_trigger(model, t3, trigger1);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    /* Write model to disk */
+    printf("Saving model...\n");
+    rc = sotc_model_write("test_create_multiple_transitions.sotc", model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_model_free(model);
+    ASSERT_EQ(rc, SOTC_OK);
+
+}
+
+TEST(missing_trigger)
+{
+    int rc;
+    struct sotc_model *model;
+    struct sotc_state *a, *b;
+
+    rc = sotc_model_create(&model, "missing_trigger");
+    ASSERT_EQ(rc, SOTC_OK);
+    ASSERT(model != NULL);
+
+    /* Create states A and B */
+    rc = sotc_add_state(model->root, "A", &a);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    rc = sotc_add_state(model->root, "B", &b);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    /* Create a transition from A to B */
+    struct sotc_transition *t;
+    rc = sotc_state_add_transition(a, b, &t);
+    ASSERT_EQ(rc, SOTC_OK);
+
+    /* Write model to disk */
+    rc = sotc_model_write("test_missing_trigger.sotc", model);
+    ASSERT_EQ(rc, -SOTC_ERROR);
+
+    rc = sotc_model_free(model);
+    ASSERT_EQ(rc, SOTC_OK);
+}

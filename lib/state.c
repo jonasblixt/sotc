@@ -137,11 +137,11 @@ int sotc_state_serialize(struct sotc_state *state, json_object *region,
 
     rc = serialize_action_list(state->entries, j_entries);
     if (rc != SOTC_OK)
-        return rc;
+        goto err_out;
 
     rc = serialize_action_list(state->exits, j_exits);
     if (rc != SOTC_OK)
-        return rc;
+        goto err_out;
 
     json_object_object_add(j_state, "entries", j_entries);
     json_object_object_add(j_state, "exits", j_exits);
@@ -149,8 +149,12 @@ int sotc_state_serialize(struct sotc_state *state, json_object *region,
 
     /* Serialize transitions owned by this state */
     rc = sotc_transitions_serialize(state, j_transitions);
-    if (rc != SOTC_OK)
-        return rc;
+
+    if (rc != SOTC_OK) {
+        L_ERR("Could not serialize transitions");
+        json_object_put(j_transitions);
+        goto err_out;
+    }
 
     json_object_object_add(j_state, "transitions", j_transitions);
 
@@ -164,6 +168,9 @@ int sotc_state_serialize(struct sotc_state *state, json_object *region,
     json_object_array_add(j_region_state_array, j_state);
 
     return SOTC_OK;
+err_out:
+    json_object_put(j_state);
+    return rc;
 }
 
 /* Translate json representation to the internal structure */

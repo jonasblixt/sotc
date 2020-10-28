@@ -393,6 +393,12 @@ int sotc_transitions_serialize(struct sotc_state *state,
     L_DEBUG("Serializing transitions belonging to state '%s'", state->name);
 
     for (t = state->transition; t; t = t->next) {
+        if (t->trigger == NULL) {
+            L_ERR("No trigger assigned to state '%s'", state->name);
+            rc = -SOTC_ERROR;
+            goto err_out;
+        }
+
         j_t = json_object_new_object();
 
         /* Add UUID */
@@ -497,7 +503,7 @@ int sotc_transitions_serialize(struct sotc_state *state,
 
         rc = serialize_action_list(t->guard, j_guards);
         if (rc != SOTC_OK)
-           return rc;
+           goto err_out;
 
         json_object_object_add(j_t, "guards", j_guards);
 
@@ -506,7 +512,7 @@ int sotc_transitions_serialize(struct sotc_state *state,
 
         rc = serialize_action_list(t->action, j_actions);
         if (rc != SOTC_OK)
-           return rc;
+           goto err_out;
 
         json_object_object_add(j_t, "actions", j_actions);
 
@@ -528,6 +534,8 @@ int sotc_transitions_serialize(struct sotc_state *state,
     }
 
     return SOTC_OK;
+err_out:
+    return rc;
 }
 
 int sotc_transition_free(struct sotc_transition *transition)

@@ -624,6 +624,7 @@ int sotc_model_write(const char *filename, struct sotc_model *model)
     json_object *parent_j_state = NULL;
     json_object *current_j_region = NULL;
     json_object *root_j_region = NULL;
+    json_object *jr = NULL;
     int rc = SOTC_OK;
 
     L_DEBUG("Write model to %s", filename);
@@ -661,6 +662,13 @@ int sotc_model_write(const char *filename, struct sotc_model *model)
             L_DEBUG("Found state '%s'", s->name);
 
             rc = sotc_state_serialize(s, current_j_region, &current_j_state);
+
+            if (rc != SOTC_OK) {
+                L_ERR("Could not serialize state");
+                json_object_put(parent_j_state);
+                json_object_put(current_j_region);
+                goto err_free_out;
+            }
 
             /* Queue up sub-regions */
             for (r2 = s->regions; r2; r2 = r2->next)
@@ -726,7 +734,7 @@ int sotc_model_write(const char *filename, struct sotc_model *model)
 
     /* Create the model root object */
 
-    json_object *jr = json_object_new_object();
+    jr = json_object_new_object();
     json_object *jr_kind = json_object_new_string("SOTC Model");
     json_object *jr_version = json_object_new_int(model->version);
     json_object *jr_name = json_object_new_string(model->name);
