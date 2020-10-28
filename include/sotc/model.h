@@ -262,9 +262,12 @@ int sotc_transition_deserialize(struct sotc_model *model,
                                 struct sotc_state *state,
                                 json_object *j_object);
 
+int sotc_transitions_serialize(struct sotc_state *state,
+                              json_object *j_output);
+
 int sotc_transition_set_trigger(struct sotc_model *model,
                                 struct sotc_transition *transition,
-                                uuid_t id);
+                                struct sotc_trigger *trigger);
 
 int sotc_transition_add_guard(struct sotc_model *model,
                               struct sotc_transition *transition,

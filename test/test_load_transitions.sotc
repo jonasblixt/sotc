@@ -104,6 +104,14 @@
                     "h": 50.0,
                 },
                 "vertices":[
+                    {
+                        "x":100.0,
+                        "y":100.0,
+                    },
+                    {
+                        "x":100.0,
+                        "y":110.0,
+                    }
                 ],
                 "guards":[
                     {
@@ -120,9 +128,9 @@
                 ],
                 "state-condition":[
                     {
-                        "id":"3ed4ee62-9a8f-4e9d-8021-7ccc969c2954",
-                        "positive":"false"
-                    },
+                        "state-id":"3ed4ee62-9a8f-4e9d-8021-7ccc969c2954",
+                        "positive":false
+                    }
                 ]
             }
         ],
@@ -131,7 +139,7 @@
       },
       {
         "id":"13b4423c-396e-4ed6-8310-5e34af82f40b",
-        "name":"The quick brown fox is clipped ÅÄÖ",
+        "name":"B",
         "kind":"state",
         "width":380,
         "height":240,

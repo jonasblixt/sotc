@@ -73,9 +73,14 @@ int sotc_region_serialize(struct sotc_region *region, json_object *state,
 {
     char r_uuid_str[37];
     json_object *j_region = json_object_new_object();
-    json_object *j_name = json_object_new_string(region->name);
+    json_object *j_name;
     json_object *j_offpage = json_object_new_boolean(false);
     json_object *j_states = json_object_new_array();
+
+    if (region->name != NULL)
+        j_name = json_object_new_string(region->name);
+    else
+        j_name = json_object_new_string("");
 
     uuid_unparse(region->id, r_uuid_str);
     json_object *j_id = json_object_new_string(r_uuid_str);

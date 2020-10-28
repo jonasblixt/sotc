@@ -94,7 +94,6 @@ static int serialize_action_list(struct sotc_action_ref *list,
     while (tmp) {
         uuid_unparse(tmp->act->id, uuid_str);
         action = json_object_new_object();
-        L_DEBUG("adding entry ref!");
         json_object_object_add(action, "id", json_object_new_string(uuid_str));
         json_object_array_add(output, action);
         tmp = tmp->next;
@@ -113,6 +112,7 @@ int sotc_state_serialize(struct sotc_state *state, json_object *region,
     json_object *j_name = json_object_new_string(state->name);
     json_object *j_kind = json_object_new_string("state");
     json_object *j_region = json_object_new_array();
+    json_object *j_transitions = json_object_new_array();
 
     uuid_unparse(state->id, s_uuid_str);
     json_object *j_id = json_object_new_string(s_uuid_str);
@@ -145,8 +145,14 @@ int sotc_state_serialize(struct sotc_state *state, json_object *region,
 
     json_object_object_add(j_state, "entries", j_entries);
     json_object_object_add(j_state, "exits", j_exits);
-
     json_object_object_add(j_state, "region", j_region);
+
+    /* Serialize transitions owned by this state */
+    rc = sotc_transitions_serialize(state, j_transitions);
+    if (rc != SOTC_OK)
+        return rc;
+
+    json_object_object_add(j_state, "transitions", j_transitions);
 
     (*out) = j_state;
 
@@ -257,16 +263,10 @@ int sotc_state_deserialize(struct sotc_model *model,
             }
         }
     }
-/*
-    if (json_object_object_get_ex(j_state, "transitions", &jobj)) {
-        rc = sotc_transition_deserialize(model, state, jobj);
 
-        if (rc != SOTC_OK) {
-            L_ERR("Could not de-serialize transition table");
-            goto err_free_name_out;
-        }
-    }
-*/
+    /* NOTE: Transitions are loaded in pass 2 since the whole object tree
+     *  must be available for state resolution in transitions */
+
     L_DEBUG("Loading state %s", state->name);
 
     return rc;
@@ -405,6 +405,33 @@ int sotc_state_add_transition(struct sotc_state *source,
                               struct sotc_state *dest,
                               struct sotc_transition **transition)
 {
+    struct sotc_transition *t, *t_tmp;
+
+    t = malloc(sizeof(*t));
+
+    if (t == NULL)
+        return -SOTC_ERROR;
+
+    memset(t, 0, sizeof(*t));
+
+    if (transition) {
+        (*transition) = t;
+    }
+
+    uuid_generate_random(t->id);
+    t->source.state = source;
+    t->dest.state = dest;
+
+    if (source->transition == NULL) {
+        source->transition = t;
+    } else {
+        t_tmp = source->transition;
+
+        while (t_tmp->next)
+            t_tmp = t_tmp->next;
+        t_tmp->next = t;
+    }
+
     return SOTC_OK;
 }
 
@@ -417,5 +444,6 @@ int sotc_state_delete_transition(struct sotc_state *source,
 int sotc_state_get_transitions(struct sotc_state *state,
                                struct sotc_transition **transitions)
 {
+    (*transitions) = state->transition;
     return SOTC_OK;
 }
