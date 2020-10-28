@@ -1241,3 +1241,38 @@ struct sotc_trigger * sotc_model_get_trigger_from_uuid(struct sotc_model *model,
 
     return NULL;
 }
+
+int sotc_model_deserialize_coords(json_object *j_coords,
+                            struct sotc_coords *coords)
+{
+    json_object *jobj;
+
+    if (!json_object_object_get_ex(j_coords, "x", &jobj)) {
+        L_ERR("Could not read x");
+        return -SOTC_ERROR;
+    }
+
+    coords->x = json_object_get_double(jobj);
+
+    if (!json_object_object_get_ex(j_coords, "y", &jobj)) {
+        L_ERR("Could not read x");
+        return -SOTC_ERROR;
+    }
+
+    coords->y = json_object_get_double(jobj);
+
+    if (!json_object_object_get_ex(j_coords, "w", &jobj)) {
+        L_ERR("Could not read x");
+        return -SOTC_ERROR;
+    }
+
+    coords->w = json_object_get_double(jobj);
+
+    if (!json_object_object_get_ex(j_coords, "h", &jobj)) {
+        L_ERR("Could not read x");
+        return -SOTC_ERROR;
+    }
+
+    coords->h = json_object_get_double(jobj);
+
+}

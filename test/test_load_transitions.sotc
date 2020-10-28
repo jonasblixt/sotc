@@ -33,6 +33,26 @@
             "id":"3bfebe4b-897b-47a3-b405-465f5de3c74d",
         },
   ],
+  "actions":[
+        {
+            "name":"aFirst",
+            "id":"484691a3-e873-4cc3-a39f-7d4e7fad4435",
+        },
+        {
+            "name":"aSecond",
+            "id":"6e5efe2e-3b75-474c-b25e-1c81f6182bb1",
+        },
+  ],
+  "guards":[
+        {
+            "name":"gFirst",
+            "id":"fba25ae9-27f9-4c59-bb0b-8919082ef20e",
+        },
+        {
+            "name":"gSecond",
+            "id":"8218f025-99f2-4bdd-9397-5a5960b69fac",
+        },
+  ],
   "region":{
     "id":"1b5e0881-f6a0-4dc4-b226-45d61bcc6ab6",
     "name":"Root region",
@@ -86,8 +106,17 @@
                 "vertices":[
                 ],
                 "guards":[
+                    {
+                        "id":"8218f025-99f2-4bdd-9397-5a5960b69fac",
+                    }
                 ],
                 "actions":[
+                    {
+                        "id":"484691a3-e873-4cc3-a39f-7d4e7fad4435",
+                    },
+                    {
+                        "id":"6e5efe2e-3b75-474c-b25e-1c81f6182bb1",
+                    }
                 ],
                 "state-condition":[
                     {

@@ -175,6 +175,9 @@ int sotc_model_delete_trigger(struct sotc_model *model, uuid_t id);
 int sotc_model_get_trigger(struct sotc_model *model, uuid_t id,
                            struct sotc_trigger **out);
 
+int sotc_model_deserialize_coords(json_object *j_coords,
+                                  struct sotc_coords *coords);
+
 struct sotc_action* sotc_model_get_entries(struct sotc_model *model);
 struct sotc_action* sotc_model_get_exits(struct sotc_model *model);
 struct sotc_action* sotc_model_get_guards(struct sotc_model *model);
@@ -284,7 +287,9 @@ int sotc_transition_add_state_condition(struct sotc_model *model,
 
 int sotc_transition_delete_state_condition(struct sotc_transition *transition,
                                             uuid_t id);
-struct sotc_state_ref *sotc_transition_get_state_conditions(struct sotc_transition *t);
+
+struct sotc_transition_state_condition *
+sotc_transition_get_state_conditions(struct sotc_transition *t);
 
 int sotc_transition_free(struct sotc_transition *transition);
 
