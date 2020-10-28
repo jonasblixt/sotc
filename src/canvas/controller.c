@@ -127,9 +127,9 @@ static gboolean motion_notify_event_cb (GtkWidget      *widget,
 
                 printf("move %s --> %f %f\n", selected_state->name, dx, dy);
                 selected_state->x = sselection_x +
-                                         (dx * 1/sotc_canvas_get_scale());
+                                         (dx /** 1/sotc_canvas_get_scale()*/);
                 selected_state->y = sselection_y +
-                                         (dy * 1/sotc_canvas_get_scale());
+                                         (dy /** 1/sotc_canvas_get_scale()*/);
                 gtk_widget_queue_draw (widget);
             }
         }

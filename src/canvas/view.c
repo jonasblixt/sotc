@@ -120,6 +120,7 @@ int sotc_canvas_render(cairo_t *cr, struct sotc_region *root,
     if (rc != SOTC_OK)
         return rc;
 
+    /* Pass 1: draw states, regions etc*/
     rc = sotc_stack_push(stack, (void *) root);
 
     while (sotc_stack_pop(stack, (void *) &r) == SOTC_OK)
@@ -130,6 +131,21 @@ int sotc_canvas_render(cairo_t *cr, struct sotc_region *root,
         {
             sotc_canvas_render_state(cr, s);
 
+            for (r2 = s->regions; r2; r2 = r2->next)
+            {
+                sotc_stack_push(stack, (void *) r2);
+            }
+        }
+    }
+
+    /* Pass 2: draw transitions */
+    rc = sotc_stack_push(stack, (void *) root);
+
+    while (sotc_stack_pop(stack, (void *) &r) == SOTC_OK)
+    {
+        for (s = r->state; s; s = s->next)
+        {
+            sotc_canvas_render_transition(cr, s->transition);
             for (r2 = s->regions; r2; r2 = r2->next)
             {
                 sotc_stack_push(stack, (void *) r2);

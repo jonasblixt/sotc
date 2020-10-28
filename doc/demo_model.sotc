@@ -67,19 +67,19 @@
             {
                 "id":"818c7f54-4f1d-45df-8433-b7ca3ce8a0ac",
                 "trigger":"8cae81f9-1e69-464b-9a66-2077c76d4965",
-                "start": {
+                "source": {
                     "state":"aafece16-4e8c-4f4c-b8c6-c96b650450f4",
-                    "edge":"right",
-                    "offset":20.0,
+                    "side":"right",
+                    "offset":100.0,
                 },
-                "end": {
+                "dest": {
                     "state":"13b4423c-396e-4ed6-8310-5e34af82f40b",
-                    "edge":"left",
-                    "offset":20.0,
+                    "side":"left",
+                    "offset":100.0,
                 },
                 "text-block": {
-                    "x": 10.0,
-                    "y": 10.0,
+                    "x": 450.0,
+                    "y": 100.0,
                     "w": 100.0,
                     "h": 50.0,
                 },
@@ -91,8 +91,8 @@
                 ],
                 "state-condition":[
                     {
-                        "id":"3ed4ee62-9a8f-4e9d-8021-7ccc969c2954",
-                        "positive":"false"
+                        "state-id":"3ed4ee62-9a8f-4e9d-8021-7ccc969c2954",
+                        "positive":false
                     },
                 ]
             }
@@ -102,11 +102,11 @@
       },
       {
         "id":"13b4423c-396e-4ed6-8310-5e34af82f40b",
-        "name":"The quick brown fox is clipped ÅÄÖ",
+        "name":"B",
         "kind":"state",
         "width":380,
         "height":240,
-        "x":446,
+        "x":646,
         "y":72,
         "region":[
         ]
