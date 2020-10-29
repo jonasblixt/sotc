@@ -141,6 +141,61 @@ static gboolean motion_notify_event_cb (GtkWidget      *widget,
 
   return TRUE;
 }
+/*
+static double distance_point_to_line(double px, double py,
+                                     double sx, double sy,
+                                     double ex, double ey)
+{
+    double a, b, c;
+
+    a = sy - ey;
+    b = ex - sx;
+    c = sx * ey - ex * sy;
+
+    printf("distance from <%f, %f> to line <<%f, %f>, <%f, %f>>\n",
+                px, py, sx, sy, ex, ey);
+
+    return fabs(a * px + b * py + c) / sqrt(a * a + b * b);
+}
+*/
+
+static double distance_point_to_seg(double px, double py,
+                                    double sx, double sy,
+                                    double ex, double ey)
+{
+    double A = px - sx;
+    double B = py - sy;
+    double C = ex - sx;
+    double D = ey - sy;
+
+    double dot = A * C + B * D;
+    double len_sq = C * C + D * D;
+    double param = -1;
+
+    if (len_sq != 0) //in case of 0 length line
+        param = dot / len_sq;
+
+    double xx, yy;
+
+    if (param < 0) {
+        xx = sx;
+        yy = sy;
+    } else if (param > 1) {
+        xx = ex;
+        yy = ey;
+    } else {
+        xx = sx + param * C;
+        yy = sy + param * D;
+    }
+
+    double dx = px - xx;
+    double dy = py - yy;
+
+    printf("distance from <%f, %f> to line <<%f, %f>, <%f, %f>>\n",
+            px, py, sx, sy, ex, ey);
+
+    return sqrt(dx * dx + dy * dy);
+}
 
 gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
 {
@@ -159,8 +214,8 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
     selected_state = NULL;
     selected_region = NULL;
 
-    double px = event->x;
-    double py = (int) event->y;
+    double px = event->x / sotc_canvas_get_scale();
+    double py = event->y / sotc_canvas_get_scale();
 
     sotc_stack_init(&stack, SOTC_MAX_R_S);
     sotc_stack_push(stack, model->root);
@@ -169,10 +224,6 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
     {
         r->focus = false;
         sotc_get_region_absolute_coords(r, &x, &y, &w, &h);
-        x *= sotc_canvas_get_scale();
-        y *= sotc_canvas_get_scale();
-        w *= sotc_canvas_get_scale();
-        h *= sotc_canvas_get_scale();
 
         if ( (px > x) && (px < (x + w)) &&
              (py > y) && (py < (y + h))) {
@@ -185,11 +236,6 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
             s->focus = false;
             sotc_get_state_absolute_coords(s, &x, &y, &w, &h);
 
-            x *= sotc_canvas_get_scale();
-            y *= sotc_canvas_get_scale();
-            w *= sotc_canvas_get_scale();
-            h *= sotc_canvas_get_scale();
-
             if ( (px > x) && (px < (x + w)) &&
                  (py > y) && (py < (y + h))) {
                  selected_state = s;
@@ -197,12 +243,14 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
             }
             for (r2 = s->regions; r2; r2 = r2->next)
             {
+                if (r->off_page)
+                    continue;
+
                 sotc_stack_push(stack, r2);
             }
         }
     }
 
-    sotc_stack_free(stack);
 
     if (selected_state && last_object_state) {
          L_DEBUG("State %s selected, pr = %s", selected_state->name,
@@ -219,6 +267,80 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
          selected_state = NULL;
     }
 
+    /* Check transitions selection */
+
+    sotc_stack_push(stack, model->root);
+
+    while (sotc_stack_pop(stack, (void **) &r) == SOTC_OK)
+    {
+        for (s = r->state; s; s = s->next)
+        {
+            if (s->transition) {
+                struct sotc_vertice *v;
+                double vsx, vsy, vex, vey;
+                double tsx, tsy, tex, tey;
+                double d;
+                bool t_focus = false;
+                L_DEBUG("Checking transitions from %s", s->name);
+                s->transition->focus = false;
+                transition_calc_begin_end_point(s,
+                                                s->transition->source.side,
+                                                s->transition->source.offset,
+                                                &tsx, &tsy);
+                transition_calc_begin_end_point(s->transition->dest.state,
+                                                s->transition->dest.side,
+                                                s->transition->dest.offset,
+                                                &tex, &tey);
+                vsx = tsx;
+                vsy = tsy;
+
+                for (v = s->transition->vertices; v; v = v->next) {
+                    vex = v->x;
+                    vey = v->y;
+
+                    d = distance_point_to_seg(px, py,
+                                              vsx, vsy,
+                                              vex, vey);
+                    printf("d = %f\n", d);
+                    if (d < 10.0) {
+                        t_focus = true;
+                        break;
+                    }
+                    vsx = v->x;
+                    vsy = v->y;
+                }
+                vsx = vex;
+                vsy = vey;
+                vex = tex;
+                vey = tey;
+
+                d = distance_point_to_seg(px, py,
+                                          vsx, vsy,
+                                          vex, vey);
+                printf("d = %f\n", d);
+                if (d < 10.0)
+                    t_focus = true;
+
+                if (t_focus) {
+                    printf("Transition is focused!\n");
+                    s->transition->focus = true;
+                    if (selected_state)
+                        selected_state->focus = false;
+                    if (selected_region)
+                        selected_region->focus = false;
+                }
+            }
+            for (r2 = s->regions; r2; r2 = r2->next)
+            {
+                if (r->off_page)
+                    continue;
+
+                sotc_stack_push(stack, r2);
+            }
+        }
+    }
+
+    sotc_stack_free(stack);
     gtk_widget_queue_draw (widget);
 
     return TRUE;

@@ -33,6 +33,12 @@
             "id":"3bfebe4b-897b-47a3-b405-465f5de3c74d",
         },
   ],
+  "guards":[
+    {
+      "name":"gGuard",
+      "id":"73cc6247-09c5-445a-85f7-a2fc7fba3d7c"
+    }
+  ],
   "region":{
     "id":"1b5e0881-f6a0-4dc4-b226-45d61bcc6ab6",
     "name":"Root region",
@@ -84,8 +90,19 @@
                     "h": 50.0,
                 },
                 "vertices":[
+                    {
+                        "x":540,
+                        "y":220,
+                    },
+                    {
+                        "x":620,
+                        "y":140,
+                    }
                 ],
                 "guards":[
+                    {
+                        "id":"73cc6247-09c5-445a-85f7-a2fc7fba3d7c",
+                    }
                 ],
                 "actions":[
                 ],
@@ -106,8 +123,8 @@
         "kind":"state",
         "width":380,
         "height":240,
-        "x":646,
-        "y":72,
+        "x":680,
+        "y":70,
         "region":[
         ]
       },

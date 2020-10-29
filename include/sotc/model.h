@@ -107,6 +107,7 @@ struct sotc_transition
     struct sotc_coords text_block_coords;
     struct sotc_vertice *vertices;
     struct sotc_transition_state_condition *state_conditions;
+    bool focus;
     struct sotc_transition *next;
 };
 

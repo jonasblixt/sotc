@@ -6,11 +6,11 @@
 
 #include "canvas/view.h"
 
-static int calc_begin_end_point(struct sotc_state *s,
-                                enum sotc_side side,
-                                double offset,
-                                double *x,
-                                double *y)
+int transition_calc_begin_end_point(struct sotc_state *s,
+                                    enum sotc_side side,
+                                    double offset,
+                                    double *x,
+                                    double *y)
 {
     switch (side) {
         case SOTC_SIDE_LEFT:
@@ -42,20 +42,59 @@ int sotc_canvas_render_transition(cairo_t *cr,
         return SOTC_OK;
 
     for (struct sotc_transition *t = transitions; t; t = t->next) {
-        calc_begin_end_point(t->source.state,
+        transition_calc_begin_end_point(t->source.state,
                              t->source.side,
                              t->source.offset,
                              &begin_x, &begin_y);
 
-        calc_begin_end_point(t->dest.state,
+        transition_calc_begin_end_point(t->dest.state,
                              t->dest.side,
                              t->dest.offset,
                              &end_x, &end_y);
 
+        struct sotc_vertice *v;
+
         cairo_save(cr);
-        cairo_move_to (cr, begin_x, begin_y);
-        cairo_line_to(cr, end_x, end_y);
         cairo_set_source_rgb (cr, 0, 0, 0);
+
+        if (t->focus) {
+            cairo_set_source_rgb (cr, 0, 1, 0);
+            cairo_save(cr);
+            cairo_rectangle (cr, begin_x - 5, begin_y - 5, 10, 10);
+            cairo_stroke(cr);
+            cairo_restore(cr);
+        }
+
+        cairo_move_to (cr, begin_x, begin_y);
+        cairo_set_line_width (cr, 2.0);
+
+        for (v = t->vertices; v; v = v->next) {
+            cairo_line_to(cr, v->x, v->y);
+            if (t->focus) {
+                cairo_save(cr);
+                cairo_rectangle (cr, v->x - 5, v->y - 5, 10, 10);
+                cairo_stroke(cr);
+                cairo_restore(cr);
+            }
+
+            cairo_stroke (cr);
+
+            cairo_move_to (cr, v->x, v->y);
+            begin_x = v->x;
+            begin_y = v->y;
+        }
+
+        cairo_line_to(cr, end_x, end_y);
+
+        if (t->focus) {
+            cairo_set_source_rgb (cr, 0, 1, 0);
+            cairo_save(cr);
+            cairo_rectangle (cr, end_x - 5, end_y - 5, 10, 10);
+            cairo_stroke(cr);
+            cairo_restore(cr);
+        } else {
+            cairo_set_source_rgb (cr, 0, 0, 0);
+        }
         cairo_set_line_width (cr, 2.0);
         cairo_stroke (cr);
         cairo_restore(cr);
@@ -74,18 +113,25 @@ int sotc_canvas_render_transition(cairo_t *cr,
         cairo_line_to(cr, x1, y1);
         cairo_line_to(cr, x2, y2);
         cairo_close_path(cr);
-        cairo_set_source_rgb (cr, 0, 0, 0);
+
+        if (t->focus)
+            cairo_set_source_rgb (cr, 0, 1, 0);
+        else
+            cairo_set_source_rgb (cr, 0, 0, 0);
         cairo_set_line_width (cr, 2.0);
         cairo_fill_preserve(cr);
         cairo_restore(cr);
 
         /* Draw text box */
+        char text[1024];
         cairo_save(cr);
         cairo_set_font_size (cr, 18);
         cairo_set_source_rgb (cr, 0,0,0);
         cairo_move_to (cr, t->text_block_coords.x,
                            t->text_block_coords.y);
-        cairo_show_text (cr, t->trigger->name);
+        snprintf(text, sizeof(text), "%s [%s] / %s",
+                    t->trigger->name, t->guard->act->name, "");
+        cairo_show_text (cr, text);
         cairo_restore(cr);
     }
 

@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 {
     GtkWidget *window;
     GtkWidget *state_canvas;
-    GtkWidget *object_tree;
+    //GtkWidget *object_tree;
 
     int rc = SOTC_OK;
     struct sotc_model *model;
@@ -105,7 +105,7 @@ int main(int argc, char **argv)
         goto err_out;
     }
 */
-    gtk_widget_set_size_request(object_tree, 300, -1);
+    //gtk_widget_set_size_request(object_tree, 300, -1);
 
     GtkWidget *hpane = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
 

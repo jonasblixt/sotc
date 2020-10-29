@@ -37,4 +37,9 @@ bool sotc_region_is_root_or_offpage(struct sotc_region *r);
 
 double sotc_canvas_nearest_grid_point(double in);
 
+int transition_calc_begin_end_point(struct sotc_state *s,
+                                    enum sotc_side side,
+                                    double offset,
+                                    double *x,
+                                    double *y);
 #endif  // CANVAS_VIEW_H_
