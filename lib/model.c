@@ -1283,4 +1283,5 @@ int sotc_model_deserialize_coords(json_object *j_coords,
 
     coords->h = json_object_get_double(jobj);
 
+    return SOTC_OK;
 }
