@@ -126,6 +126,76 @@
         "x":680,
         "y":70,
         "region":[
+        ],
+        "transitions":[
+            {
+                "id":"8b69f757-89e4-4812-9347-70db25f20a75",
+                "trigger":"8cae81f9-1e69-464b-9a66-2077c76d4965",
+                "source": {
+                    "state":"13b4423c-396e-4ed6-8310-5e34af82f40b",
+                    "side":"left",
+                    "offset":180.0,
+                },
+                "dest": { 
+                    "state":"aafece16-4e8c-4f4c-b8c6-c96b650450f4",
+                    "side":"right",
+                    "offset":180.0,
+                },
+                "text-block": {
+                    "x": 450.0,
+                    "y": 300.0,
+                    "w": 100.0,
+                    "h": 50.0,
+                },
+                "vertices":[
+                ],
+                "guards":[
+                ],
+                "actions":[
+                ],
+                "state-condition":[
+                ]
+            },
+            {
+                "id":"848d681b-4261-4793-90ed-f95ca9de6f5d",
+                "trigger":"7c62f0ae-0695-40c5-b080-104a7bc370e9",
+                "source": {
+                    "state":"13b4423c-396e-4ed6-8310-5e34af82f40b",
+                    "side":"top",
+                    "offset":280.0,
+                },
+                "dest": { 
+                    "state":"13b4423c-396e-4ed6-8310-5e34af82f40b",
+                    "side":"right",
+                    "offset":80.0,
+                },
+                "text-block": {
+                    "x": 1150.0,
+                    "y": 50.0,
+                    "w": 100.0,
+                    "h": 50.0,
+                },
+                "vertices":[
+                    {
+                        "x": 960.0,
+                        "y": 20.0,
+                    },
+                    {
+                        "x": 1100.0,
+                        "y": 20.0,
+                    },
+                    {
+                        "x": 1100.0,
+                        "y": 150.0,
+                    },
+                ],
+                "guards":[
+                ],
+                "actions":[
+                ],
+                "state-condition":[
+                ]
+            }
         ]
       },
       {

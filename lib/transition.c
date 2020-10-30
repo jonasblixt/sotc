@@ -193,15 +193,15 @@ int sotc_transition_deserialize(struct sotc_model *model,
 
     L_DEBUG("Parsing transitions in state '%s'", state->name);
 
-    transition = malloc(sizeof(struct sotc_transition));
-
-    if (transition == NULL)
-        return -SOTC_ERROR;
-
-    memset(transition, 0, sizeof(*transition));
-
     for (int n = 0; n < n_entries; n++) {
         j_t = json_object_array_get_idx(j_transitions_list, n);
+
+        transition = malloc(sizeof(struct sotc_transition));
+
+        if (transition == NULL)
+            return -SOTC_ERROR;
+
+        memset(transition, 0, sizeof(*transition));
 
         if (!json_object_object_get_ex(j_t, "id", &j_id)) {
             L_ERR("Could not read ID");
@@ -339,20 +339,21 @@ int sotc_transition_deserialize(struct sotc_model *model,
             }
         }
 
+        L_DEBUG("Loaded transition '%s' -> '%s'", transition->source.state->name,
+                                                  transition->dest.state->name);
+
+        if (state->transition == NULL) {
+            state->transition = transition;
+        } else {
+            struct sotc_transition *list = state->transition;
+
+            while (list->next)
+                list = list->next;
+            list->next = transition;
+        }
     }
 
-    L_DEBUG("Loaded transition '%s' -> '%s'", transition->source.state->name,
-                                              transition->dest.state->name);
 
-    if (state->transition == NULL) {
-        state->transition = transition;
-    } else {
-        struct sotc_transition *list = state->transition;
-
-        while (list->next)
-            list = list->next;
-        list->next = transition;
-    }
 
     return rc;
 err_out:

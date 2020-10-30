@@ -10,6 +10,7 @@
 static struct sotc_model *model;
 static struct sotc_state *selected_state = NULL;
 static struct sotc_region *selected_region = NULL;
+static struct sotc_transition *selected_transition = NULL;
 static double selection_start_x, selection_start_y;
 static double sselection_x, sselection_y;
 
@@ -269,48 +270,55 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
 
     /* Check transitions selection */
 
+    if (selected_transition) {
+        selected_transition->focus = false;
+        selected_transition = NULL;
+    }
+
     sotc_stack_push(stack, model->root);
 
     while (sotc_stack_pop(stack, (void **) &r) == SOTC_OK)
     {
         for (s = r->state; s; s = s->next)
         {
-            if (s->transition) {
+            for (struct sotc_transition *t = s->transition; t; t = t->next) {
                 struct sotc_vertice *v;
                 double vsx, vsy, vex, vey;
                 double tsx, tsy, tex, tey;
                 double d;
                 bool t_focus = false;
                 L_DEBUG("Checking transitions from %s", s->name);
-                s->transition->focus = false;
+                t->focus = false;
                 transition_calc_begin_end_point(s,
-                                                s->transition->source.side,
-                                                s->transition->source.offset,
+                                                t->source.side,
+                                                t->source.offset,
                                                 &tsx, &tsy);
-                transition_calc_begin_end_point(s->transition->dest.state,
-                                                s->transition->dest.side,
-                                                s->transition->dest.offset,
+                transition_calc_begin_end_point(t->dest.state,
+                                                t->dest.side,
+                                                t->dest.offset,
                                                 &tex, &tey);
                 vsx = tsx;
                 vsy = tsy;
 
-                for (v = s->transition->vertices; v; v = v->next) {
-                    vex = v->x;
-                    vey = v->y;
+                if (t->vertices) {
+                    for (v = t->vertices; v; v = v->next) {
+                        vex = v->x;
+                        vey = v->y;
 
-                    d = distance_point_to_seg(px, py,
-                                              vsx, vsy,
-                                              vex, vey);
-                    printf("d = %f\n", d);
-                    if (d < 10.0) {
-                        t_focus = true;
-                        break;
+                        d = distance_point_to_seg(px, py,
+                                                  vsx, vsy,
+                                                  vex, vey);
+                        printf("d = %f\n", d);
+                        if (d < 10.0) {
+                            t_focus = true;
+                            break;
+                        }
+                        vsx = v->x;
+                        vsy = v->y;
                     }
-                    vsx = v->x;
-                    vsy = v->y;
+                    vsx = vex;
+                    vsy = vey;
                 }
-                vsx = vex;
-                vsy = vey;
                 vex = tex;
                 vey = tey;
 
@@ -323,7 +331,7 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
 
                 if (t_focus) {
                     printf("Transition is focused!\n");
-                    s->transition->focus = true;
+                    selected_transition = t;
                     if (selected_state)
                         selected_state->focus = false;
                     if (selected_region)
@@ -339,6 +347,9 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
             }
         }
     }
+
+    if (selected_transition)
+        selected_transition->focus = true;
 
     sotc_stack_free(stack);
     gtk_widget_queue_draw (widget);

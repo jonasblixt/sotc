@@ -42,6 +42,7 @@ int sotc_canvas_render_transition(cairo_t *cr,
         return SOTC_OK;
 
     for (struct sotc_transition *t = transitions; t; t = t->next) {
+
         transition_calc_begin_end_point(t->source.state,
                              t->source.side,
                              t->source.offset,
@@ -61,7 +62,7 @@ int sotc_canvas_render_transition(cairo_t *cr,
             cairo_set_source_rgb (cr, 0, 1, 0);
             cairo_save(cr);
             cairo_rectangle (cr, begin_x - 5, begin_y - 5, 10, 10);
-            cairo_stroke(cr);
+            cairo_fill_preserve(cr);
             cairo_restore(cr);
         }
 
@@ -73,7 +74,7 @@ int sotc_canvas_render_transition(cairo_t *cr,
             if (t->focus) {
                 cairo_save(cr);
                 cairo_rectangle (cr, v->x - 5, v->y - 5, 10, 10);
-                cairo_stroke(cr);
+                cairo_fill_preserve(cr);
                 cairo_restore(cr);
             }
 
@@ -90,7 +91,7 @@ int sotc_canvas_render_transition(cairo_t *cr,
             cairo_set_source_rgb (cr, 0, 1, 0);
             cairo_save(cr);
             cairo_rectangle (cr, end_x - 5, end_y - 5, 10, 10);
-            cairo_stroke(cr);
+            cairo_fill_preserve(cr);
             cairo_restore(cr);
         } else {
             cairo_set_source_rgb (cr, 0, 0, 0);
@@ -108,18 +109,17 @@ int sotc_canvas_render_transition(cairo_t *cr,
         double y2 = end_y + 15 * sin(angle + 0.4);
 
         cairo_save(cr);
-        cairo_new_sub_path(cr);
-        cairo_move_to (cr, end_x, end_y);
-        cairo_line_to(cr, x1, y1);
-        cairo_line_to(cr, x2, y2);
-        cairo_close_path(cr);
 
         if (t->focus)
             cairo_set_source_rgb (cr, 0, 1, 0);
         else
             cairo_set_source_rgb (cr, 0, 0, 0);
-        cairo_set_line_width (cr, 2.0);
-        cairo_fill_preserve(cr);
+        cairo_new_sub_path(cr);
+        cairo_move_to (cr, end_x, end_y);
+        cairo_line_to(cr, x1, y1);
+        cairo_line_to(cr, x2, y2);
+        cairo_close_path(cr);
+        cairo_fill(cr);
         cairo_restore(cr);
 
         /* Draw text box */
@@ -130,9 +130,10 @@ int sotc_canvas_render_transition(cairo_t *cr,
         cairo_move_to (cr, t->text_block_coords.x,
                            t->text_block_coords.y);
         snprintf(text, sizeof(text), "%s [%s] / %s",
-                    t->trigger->name, t->guard->act->name, "");
+                    t->trigger->name, "", "");
         cairo_show_text (cr, text);
         cairo_restore(cr);
+
     }
 
     return SOTC_OK;
