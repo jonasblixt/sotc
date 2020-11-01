@@ -180,32 +180,3 @@ TEST(create_multiple_transitions)
 
 }
 
-TEST(missing_trigger)
-{
-    int rc;
-    struct sotc_model *model;
-    struct sotc_state *a, *b;
-
-    rc = sotc_model_create(&model, "missing_trigger");
-    ASSERT_EQ(rc, SOTC_OK);
-    ASSERT(model != NULL);
-
-    /* Create states A and B */
-    rc = sotc_add_state(model->root, "A", &a);
-    ASSERT_EQ(rc, SOTC_OK);
-
-    rc = sotc_add_state(model->root, "B", &b);
-    ASSERT_EQ(rc, SOTC_OK);
-
-    /* Create a transition from A to B */
-    struct sotc_transition *t;
-    rc = sotc_state_add_transition(a, b, &t);
-    ASSERT_EQ(rc, SOTC_OK);
-
-    /* Write model to disk */
-    rc = sotc_model_write("test_missing_trigger.sotc", model);
-    ASSERT_EQ(rc, -SOTC_ERROR);
-
-    rc = sotc_model_free(model);
-    ASSERT_EQ(rc, SOTC_OK);
-}
