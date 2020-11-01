@@ -15,7 +15,7 @@ enum sotc_transition_kind
 
 enum sotc_state_kind
 {
-    SOTC_STATE_SIMPLE,
+    SOTC_STATE_NORMAL,
     SOTC_STATE_INIT,
     SOTC_STATE_FINAL,
     SOTC_STATE_SHALLOW_HISTORY,
@@ -43,6 +43,14 @@ enum sotc_side
     SOTC_SIDE_RIGHT,
     SOTC_SIDE_TOP,
     SOTC_SIDE_BOTTOM,
+};
+
+enum sotc_transition_vertice_kind
+{
+    SOTC_TRANSITION_VERTICE_NONE,
+    SOTC_TRANSITION_VERTICE,
+    SOTC_TRANSITION_VERTICE_START,
+    SOTC_TRANSITION_VERTICE_END,
 };
 
 struct sotc_action
@@ -118,6 +126,7 @@ struct sotc_region
     bool off_page;
     double h;
     bool focus;
+    bool draw_as_root;
     struct sotc_state *state;
     struct sotc_state *parent_state;
     struct sotc_state *last_state;
@@ -134,6 +143,7 @@ struct sotc_state
     double h;
     double region_y_offset;
     bool focus;
+    bool resizeable;
     enum sotc_state_kind kind;
     struct sotc_transition *transition;
     struct sotc_action_ref *entries;

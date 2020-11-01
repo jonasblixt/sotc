@@ -211,22 +211,19 @@ int sotc_transition_deserialize(struct sotc_model *model,
 
         uuid_parse(json_object_get_string(j_id), transition->id);
 
-        if (!json_object_object_get_ex(j_t, "trigger", &j_trigger)) {
-            L_ERR("Could not trigger ID");
-            rc = -SOTC_ERR_PARSE;
-            goto err_out;
+        if (json_object_object_get_ex(j_t, "trigger", &j_trigger)) {
+            uuid_parse(json_object_get_string(j_trigger), trigger_uu);
+            transition->trigger = sotc_model_get_trigger_from_uuid(model,
+                                                                   trigger_uu);
         }
 
-        uuid_parse(json_object_get_string(j_trigger), trigger_uu);
-        transition->trigger = sotc_model_get_trigger_from_uuid(model,
-                                                               trigger_uu);
-
+/*
         if (transition->trigger == NULL) {
             L_ERR("Could not find trigger");
             rc = -SOTC_ERROR;
             goto err_out;
         }
-
+*/
         if (!json_object_object_get_ex(j_t, "source", &j_source)) {
             L_ERR("Could find source state");
             rc = -SOTC_ERR_PARSE;
@@ -394,12 +391,6 @@ int sotc_transitions_serialize(struct sotc_state *state,
     L_DEBUG("Serializing transitions belonging to state '%s'", state->name);
 
     for (t = state->transition; t; t = t->next) {
-        if (t->trigger == NULL) {
-            L_ERR("No trigger assigned to state '%s'", state->name);
-            rc = -SOTC_ERROR;
-            goto err_out;
-        }
-
         j_t = json_object_new_object();
 
         /* Add UUID */
@@ -408,9 +399,11 @@ int sotc_transitions_serialize(struct sotc_state *state,
         json_object_object_add(j_t, "id", j_t_id);
 
         /* Add trigger */
-        uuid_unparse(t->trigger->id, uuid_str);
-        j_trigger_id = json_object_new_string(uuid_str);
-        json_object_object_add(j_t, "trigger", j_trigger_id);
+        if (t->trigger) {
+            uuid_unparse(t->trigger->id, uuid_str);
+            j_trigger_id = json_object_new_string(uuid_str);
+            json_object_object_add(j_t, "trigger", j_trigger_id);
+        }
 
         /* Add source state */
         j_source_state = json_object_new_object();
@@ -488,10 +481,10 @@ int sotc_transitions_serialize(struct sotc_state *state,
         for (struct sotc_vertice *v = t->vertices; v; v = v->next) {
             json_object *j_vertice = json_object_new_object();
 
-            json_object_object_add(j_dest_state, "x",
+            json_object_object_add(j_vertice, "x",
                                    json_object_new_double(v->x));
 
-            json_object_object_add(j_dest_state, "y",
+            json_object_object_add(j_vertice, "y",
                                    json_object_new_double(v->y));
 
             json_object_array_add(j_vertices, j_vertice);

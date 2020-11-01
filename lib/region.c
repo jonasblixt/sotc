@@ -74,7 +74,7 @@ int sotc_region_serialize(struct sotc_region *region, json_object *state,
     char r_uuid_str[37];
     json_object *j_region = json_object_new_object();
     json_object *j_name;
-    json_object *j_offpage = json_object_new_boolean(false);
+    json_object *j_offpage = json_object_new_boolean(region->off_page);
     json_object *j_states = json_object_new_array();
 
     if (region->name != NULL)
@@ -138,6 +138,12 @@ int sotc_region_deserialize(json_object *j_r, struct sotc_state *state,
         r->h = 0.0;
     else
         r->h = json_object_get_double(jobj);
+
+    if (!json_object_object_get_ex(j_r, "off_page", &jobj)) {
+        r->off_page = false;
+    } else {
+        r->off_page = json_object_get_boolean(jobj);
+    }
 
     if (!json_object_object_get_ex(j_r, "id", &j_id)) {
         L_ERR("Could not read id");

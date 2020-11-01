@@ -8,11 +8,17 @@
 #include "canvas/view.h"
 
 static struct sotc_model *model;
+static struct sotc_region *current_region;
 static struct sotc_state *selected_state = NULL;
 static struct sotc_region *selected_region = NULL;
 static struct sotc_transition *selected_transition = NULL;
+static enum sotc_transition_vertice_kind selected_vertice_kind;
+static struct sotc_vertice *selected_transition_vertice = NULL;
 static double selection_start_x, selection_start_y;
 static double sselection_x, sselection_y;
+static double canvas_ox, canvas_oy;
+static bool pan_mode;
+static enum sotc_state_resize_selector selected_state_corner;
 
 static void draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data)
 {
@@ -31,7 +37,7 @@ static void draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data)
     width = allocation.width;
     height = allocation.height;
 
-    sotc_canvas_render(cr, model->root, width, height);
+    sotc_canvas_render(cr, current_region, width, height);
 
     clock_gettime(CLOCK_MONOTONIC, &ts);
 
@@ -39,8 +45,29 @@ static void draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data)
     printf("render %ld ms\n", r_time);
 }
 
+gboolean keyrelease_cb(GtkWidget *widget, GdkEventKey *event, gpointer data)
+{
+    if (event->keyval == GDK_KEY_Shift_L)
+    {
+        pan_mode = false;
+        return TRUE;
+    }
+}
+
 gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data)
 {
+
+    if (event->keyval == GDK_KEY_A)
+    {
+        if (current_region->parent_state) {
+            L_DEBUG("Ascending to region: %s",
+                    current_region->parent_state->parent_region->name);
+            current_region->draw_as_root = false;
+            current_region = current_region->parent_state->parent_region;
+            current_region->draw_as_root = true;
+        }
+        gtk_widget_queue_draw (widget);
+    }
 
     if (event->keyval == GDK_KEY_a)
     {
@@ -96,7 +123,7 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data)
 
     if (event->keyval == GDK_KEY_Shift_L)
     {
-        printf("Shift KEY PRESSED!\n");
+        pan_mode = true;
         return TRUE;
     }
 
@@ -109,38 +136,128 @@ static gboolean motion_notify_event_cb (GtkWidget      *widget,
                                         gpointer        data)
 {
     double tx_tmp, ty_tmp;
-    double sx, sy;
-    static double tx, ty;
+    double dx, dy;
+    static double stx, sty;
 
-    sx = sotc_canvas_nearest_grid_point(selection_start_x);
-    sy = sotc_canvas_nearest_grid_point(selection_start_y);
+    tx_tmp = sotc_canvas_nearest_grid_point(event->x / sotc_canvas_get_scale());
+    ty_tmp = sotc_canvas_nearest_grid_point(event->y / sotc_canvas_get_scale());
 
-    if (selected_state && (event->state & GDK_BUTTON1_MASK)) {
-        tx_tmp = sotc_canvas_nearest_grid_point(event->x);
-        ty_tmp = sotc_canvas_nearest_grid_point(event->y);
+/*
+    if (tx_tmp == stx && ty_tmp == sty) {
+        return TRUE;
+    }
+*/
 
-        if (tx != tx_tmp || ty != ty_tmp) {
-            if (fabs(tx - selection_start_x) > 10 ||
-                fabs(ty - selection_start_y) > 10) {
-
-                double dx = tx_tmp - sx;
-                double dy = ty_tmp - sy;
-
-                printf("move %s --> %f %f\n", selected_state->name, dx, dy);
-                selected_state->x = sselection_x +
-                                         (dx /** 1/sotc_canvas_get_scale()*/);
-                selected_state->y = sselection_y +
-                                         (dy /** 1/sotc_canvas_get_scale()*/);
-                gtk_widget_queue_draw (widget);
-            }
-        }
-
-        tx = tx_tmp;
-        ty = ty_tmp;
-
+    if (!(fabs(stx - selection_start_x) > 10 ||
+        fabs(sty - selection_start_y) > 10)) {
+        return TRUE;
     }
 
-  return TRUE;
+    dx = tx_tmp - stx;
+    dy = ty_tmp - sty;
+
+    if (dx == 0 && dy == 0)
+        return TRUE;
+
+    if ((selected_region && (event->state & GDK_BUTTON1_MASK)) &&
+            (selected_state_corner == SOTC_NO_SELECTION)) {
+        //printf("Multi selection!\n");
+        sotc_canvas_set_selection(true, (selection_start_x - canvas_ox) / sotc_canvas_get_scale(),
+                                        (selection_start_y - canvas_oy) / sotc_canvas_get_scale(),
+                                        tx_tmp - canvas_ox / sotc_canvas_get_scale(),
+                                        ty_tmp - canvas_oy / sotc_canvas_get_scale());
+
+
+        gtk_widget_queue_draw (widget);
+    } else if (selected_transition &&
+               (selected_vertice_kind != SOTC_TRANSITION_VERTICE_NONE) &&
+               (event->state & GDK_BUTTON1_MASK))
+    {
+        L_DEBUG("Move transition vertice %i", selected_vertice_kind);
+
+        switch (selected_vertice_kind) {
+            case SOTC_TRANSITION_VERTICE_START:
+                if (selected_transition->source.side == SOTC_SIDE_LEFT ||
+                    selected_transition->source.side == SOTC_SIDE_RIGHT) {
+                    selected_transition->source.offset += dy;
+                } else {
+                    selected_transition->source.offset += dx;
+                }
+            break;
+            case SOTC_TRANSITION_VERTICE_END:
+                if (selected_transition->dest.side == SOTC_SIDE_LEFT ||
+                    selected_transition->dest.side == SOTC_SIDE_RIGHT) {
+                    selected_transition->dest.offset += dy;
+                } else {
+                    selected_transition->dest.offset += dx;
+                }
+            break;
+            case SOTC_TRANSITION_VERTICE:
+                selected_transition_vertice->y += dy;
+                selected_transition_vertice->x += dx;
+            break;
+            default:
+            break;
+        }
+
+        gtk_widget_queue_draw (widget);
+    } else if (pan_mode) {
+        sotc_canvas_pan(dx * sotc_canvas_get_scale(), dy * sotc_canvas_get_scale());
+        canvas_ox += dx * sotc_canvas_get_scale();
+        canvas_oy += dy * sotc_canvas_get_scale();
+        gtk_widget_queue_draw (widget);
+    }
+
+    if (selected_state && (event->state & GDK_BUTTON1_MASK) &&
+        (selected_state_corner != SOTC_NO_SELECTION) &&
+        (selected_state->kind == SOTC_STATE_NORMAL)) {
+
+        switch (selected_state_corner) {
+            case SOTC_TOP_MIDDLE:
+                selected_state->h -= dy;
+                selected_state->y += dy;
+            break;
+            case SOTC_BOT_MIDDLE:
+                selected_state->h += dy;
+            break;
+            case SOTC_TOP_RIGHT:
+                selected_state->h -= dy;
+                selected_state->w += dx;
+                selected_state->y += dy;
+            break;
+            case SOTC_RIGHT_MIDDLE:
+                selected_state->w += dx;
+            break;
+            case SOTC_LEFT_MIDDLE:
+                selected_state->w -= dx;
+                selected_state->x += dx;
+            break;
+            case SOTC_BOT_RIGHT:
+                selected_state->w += dx;
+                selected_state->h += dy;
+            break;
+            case SOTC_BOT_LEFT:
+                selected_state->w -= dx;
+                selected_state->x += dx;
+                selected_state->h += dy;
+            break;
+            case SOTC_TOP_LEFT:
+                selected_state->w -= dx;
+                selected_state->x += dx;
+                selected_state->h -= dy;
+                selected_state->y += dy;
+            break;
+        }
+        gtk_widget_queue_draw (widget);
+    } else if (selected_state && (event->state & GDK_BUTTON1_MASK)) {
+        printf("move %s --> %f %f\n", selected_state->name, dx, dy);
+        sotc_canvas_state_translate(selected_state, dx, dy);
+        gtk_widget_queue_draw (widget);
+    }
+
+    stx = tx_tmp;
+    sty = ty_tmp;
+    return TRUE;
 }
 /*
 static double distance_point_to_line(double px, double py,
@@ -191,11 +308,40 @@ static double distance_point_to_seg(double px, double py,
 
     double dx = px - xx;
     double dy = py - yy;
-
+/*
     printf("distance from <%f, %f> to line <<%f, %f>, <%f, %f>>\n",
             px, py, sx, sy, ex, ey);
+*/
 
     return sqrt(dx * dx + dy * dy);
+}
+
+static int closest_state_and_side(struct sotc_model *model,
+                                  double px, double py,
+                                  double threshold,
+                                  struct sotc_state **state,
+                                  enum sotc_side *side)
+{
+
+}
+
+static int state_and_side_at_point(struct sotc_model *model,
+                                   double px, double py,
+                                   struct sotc_state **state,
+                                   enum sotc_side *side)
+{
+}
+
+gboolean buttonrelease_cb(GtkWidget *widget, GdkEventButton *event)
+{
+    printf("%s %f %f\n", __func__,
+                       event->x,
+                       event->y);
+
+    sotc_canvas_set_selection(false, 0, 0, 0, 0);
+
+    gtk_widget_queue_draw (widget);
+    return TRUE;
 }
 
 gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
@@ -205,11 +351,16 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
     struct sotc_state *s;
     double x, y, w, h;
     bool last_object_state = false;
+    double ox, oy;
+    bool edit_object = false;
     int rc;
 
     printf("%s %f %f\n", __func__,
                        event->x,
                        event->y);
+    if (event->type == GDK_DOUBLE_BUTTON_PRESS)
+        edit_object = true;
+
     gtk_widget_grab_focus(widget);
 
     selected_state = NULL;
@@ -218,67 +369,147 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
     double px = event->x / sotc_canvas_get_scale();
     double py = event->y / sotc_canvas_get_scale();
 
+    selection_start_y = event->y;
+    selection_start_x = event->x;
+
+    sotc_canvas_get_offset(&ox, &oy);
+
+    ox = ox / sotc_canvas_get_scale();
+    oy = oy / sotc_canvas_get_scale();
+
     sotc_stack_init(&stack, SOTC_MAX_R_S);
-    sotc_stack_push(stack, model->root);
+    sotc_stack_push(stack, current_region);
 
     while (sotc_stack_pop(stack, (void **) &r) == SOTC_OK)
     {
         r->focus = false;
         sotc_get_region_absolute_coords(r, &x, &y, &w, &h);
 
-        if ( (px > x) && (px < (x + w)) &&
-             (py > y) && (py < (y + h))) {
+        x += ox;
+        y += oy;
+
+        L_DEBUG("Checking region '%s' %f, %f, %f, %f", r->name,
+                        x, y, w ,h);
+        if ( (px > (x + 5)) && (px < (x + w - 5)) &&
+             (py > (y + 5)) && (py < (y + h - 5))) {
+
+            L_DEBUG("Region '%s' selected", r->name);
              selected_region = r;
              last_object_state = false;
         }
+
+        if (r->off_page && !r->draw_as_root)
+            continue;
 
         for (s = r->state; s; s = s->next)
         {
             s->focus = false;
             sotc_get_state_absolute_coords(s, &x, &y, &w, &h);
 
-            if ( (px > x) && (px < (x + w)) &&
-                 (py > y) && (py < (y + h))) {
+            x += ox;
+            y += oy;
+
+            L_DEBUG("Checking state '%s'", s->name);
+            if ( (px > (x-5)) && (px < (x + w + 5)) &&
+                 (py > (y-5)) && (py < (y + h + 5))) {
+
+                 L_DEBUG("State '%s' selected", s->name);
                  selected_state = s;
                  last_object_state = true;
             }
             for (r2 = s->regions; r2; r2 = r2->next)
             {
-                if (r->off_page)
-                    continue;
-
                 sotc_stack_push(stack, r2);
             }
         }
     }
 
+    if (edit_object && !last_object_state && selected_region) {
+        if (selected_region->off_page) {
+            L_DEBUG("Switching view to region: %s", selected_region->name);
+            current_region->draw_as_root = false;
+            current_region = selected_region;
+            current_region->draw_as_root = true;
+            goto controller_out;
+        }
+    }
 
-    if (selected_state && last_object_state) {
+    if (selected_state != NULL && last_object_state) {
          L_DEBUG("State %s selected, pr = %s", selected_state->name,
                     selected_state->parent_region->name);
-         selected_state->focus = true;
-         selection_start_y = event->y;
-         selection_start_x = event->x;
-         sselection_x = selected_state->x;
-         sselection_y = selected_state->y;
-         selected_region = NULL;
+        selected_state->focus = true;
+        selected_region = NULL;
+        selected_state->parent_region->focus = false;
+        sselection_x = selected_state->x;
+        sselection_y = selected_state->y;
+
+        if (selected_state->kind == SOTC_STATE_NORMAL) {
+            sotc_get_state_absolute_coords(selected_state, &x, &y, &w, &h);
+
+            x += ox;
+            y += oy;
+
+            if (point_in_box(px, py, x, y, 10, 10)) {
+                L_DEBUG("Top left corner!");
+                selected_state_corner = SOTC_TOP_LEFT;
+            } else if (point_in_box(px, py, x + w, y, 10, 10)) {
+                L_DEBUG("Top right corner!");
+                selected_state_corner = SOTC_TOP_RIGHT;
+            } else if (point_in_box(px, py, x + w/2, y, 10, 10)) {
+                L_DEBUG("Top middle");
+                selected_state_corner = SOTC_TOP_MIDDLE;
+            } else if (point_in_box(px, py, x, y + h/2, 10, 10)) {
+                L_DEBUG("Left middle");
+                selected_state_corner = SOTC_LEFT_MIDDLE;
+            } else if (point_in_box(px, py, x, y + h, 10, 10)) {
+                L_DEBUG("Bottom left corner");
+                selected_state_corner = SOTC_BOT_LEFT;
+            } else if (point_in_box(px, py, x + w/2, y + h, 10, 10)) {
+                L_DEBUG("Bottom middle");
+                selected_state_corner = SOTC_BOT_MIDDLE;
+            } else if (point_in_box(px, py, x + w, y + h, 10, 10)) {
+                L_DEBUG("Bottom right corner");
+                selected_state_corner = SOTC_BOT_RIGHT;
+            } else if (point_in_box(px, py, x + w, y + h/2, 10, 10)) {
+                L_DEBUG("Right middle");
+                selected_state_corner = SOTC_RIGHT_MIDDLE;
+            } else {
+                selected_state_corner = SOTC_NO_SELECTION;
+            }
+
+            if (selected_state_corner == SOTC_NO_SELECTION) {
+                /*last_object_state = false;
+                selected_state = NULL;
+                if (selected_region) {
+                    selected_region->focus = true;
+                }*/
+            } else {
+                selected_region = NULL;
+                last_object_state = true;
+            }
+        }
+
     } else if (selected_region && !last_object_state) {
          L_DEBUG("Region %s selected!", selected_region->name);
          selected_region->focus = true;
          selected_state = NULL;
-    }
-
+    } 
     /* Check transitions selection */
 
     if (selected_transition) {
+        selected_region = NULL;
+        selected_state = NULL;
         selected_transition->focus = false;
         selected_transition = NULL;
     }
 
-    sotc_stack_push(stack, model->root);
+    sotc_stack_push(stack, current_region);
 
     while (sotc_stack_pop(stack, (void **) &r) == SOTC_OK)
     {
+        if (r->off_page && !r->draw_as_root)
+            continue;
+
         for (s = r->state; s; s = s->next)
         {
             for (struct sotc_transition *t = s->transition; t; t = t->next) {
@@ -297,35 +528,35 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
                                                 t->dest.side,
                                                 t->dest.offset,
                                                 &tex, &tey);
-                vsx = tsx;
-                vsy = tsy;
+                vsx = tsx + ox;
+                vsy = tsy + oy;
 
                 if (t->vertices) {
                     for (v = t->vertices; v; v = v->next) {
-                        vex = v->x;
-                        vey = v->y;
+                        vex = v->x + ox;
+                        vey = v->y + oy;
 
                         d = distance_point_to_seg(px, py,
                                                   vsx, vsy,
                                                   vex, vey);
-                        printf("d = %f\n", d);
+
+
                         if (d < 10.0) {
                             t_focus = true;
                             break;
                         }
-                        vsx = v->x;
-                        vsy = v->y;
+                        vsx = v->x + ox;
+                        vsy = v->y + oy;
                     }
                     vsx = vex;
                     vsy = vey;
                 }
-                vex = tex;
-                vey = tey;
+                vex = tex + ox;
+                vey = tey + oy;
 
                 d = distance_point_to_seg(px, py,
                                           vsx, vsy,
                                           vex, vey);
-                printf("d = %f\n", d);
                 if (d < 10.0)
                     t_focus = true;
 
@@ -340,17 +571,59 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
             }
             for (r2 = s->regions; r2; r2 = r2->next)
             {
-                if (r->off_page)
-                    continue;
 
                 sotc_stack_push(stack, r2);
             }
         }
     }
 
-    if (selected_transition)
-        selected_transition->focus = true;
+    if (selected_transition) {
+        double vsx, vsy, vex, vey;
+        double tsx, tsy, tex, tey;
 
+        selected_transition->focus = true;
+        selected_vertice_kind = SOTC_TRANSITION_VERTICE_NONE;
+
+        transition_calc_begin_end_point(selected_transition->source.state,
+                                        selected_transition->source.side,
+                                        selected_transition->source.offset,
+                                        &tsx, &tsy);
+        transition_calc_begin_end_point(selected_transition->dest.state,
+                                        selected_transition->dest.side,
+                                        selected_transition->dest.offset,
+                                        &tex, &tey);
+
+        vex = tex + ox;
+        vey = tey + oy;
+
+        vsx = tsx + ox;
+        vsy = tsy + oy;
+
+        L_DEBUG("%f %f, %f %f", px, py, vex, vey); 
+
+        if (point_in_box(px, py, vsx, vsy, 10, 10)) {
+            L_DEBUG("Start vertice selected");
+            selected_vertice_kind = SOTC_TRANSITION_VERTICE_START;
+        }
+
+        for (struct sotc_vertice *v = selected_transition->vertices; v; v = v->next) {
+            if (point_in_box(px, py, v->x + ox, v->y + oy, 10, 10)) {
+                L_DEBUG("Vertice selected");
+                selected_vertice_kind = SOTC_TRANSITION_VERTICE;
+                selected_transition_vertice = v;
+            }
+        }
+
+        if (point_in_box(px, py, vex, vey, 10, 10)) {
+            selected_vertice_kind = SOTC_TRANSITION_VERTICE_END;
+            L_DEBUG("End vertice selected");
+        }
+
+    } else {
+        selected_vertice_kind = SOTC_TRANSITION_VERTICE_NONE;
+    }
+
+controller_out:
     sotc_stack_free(stack);
     gtk_widget_queue_draw (widget);
 
@@ -364,6 +637,7 @@ int sotc_state_canvas_init(GtkWidget **canvas)
 
     gtk_widget_set_events (c, gtk_widget_get_events (c)
                                      | GDK_BUTTON_PRESS_MASK
+                                     | GDK_BUTTON_RELEASE_MASK
                                      | GDK_POINTER_MOTION_MASK);
 
 
@@ -371,10 +645,14 @@ int sotc_state_canvas_init(GtkWidget **canvas)
     g_signal_connect(G_OBJECT(c), "key_press_event",
                      G_CALLBACK (keypress_cb), NULL);
 
+    g_signal_connect(G_OBJECT(c), "key_release_event",
+                     G_CALLBACK (keyrelease_cb), NULL);
+
     g_signal_connect(G_OBJECT(c), "button_press_event",
                      G_CALLBACK (buttonpress_cb), NULL);
 
-
+    g_signal_connect(G_OBJECT(c), "button_release_event",
+                     G_CALLBACK (buttonrelease_cb), NULL);
     g_signal_connect (G_OBJECT(c), "motion-notify-event",
                     G_CALLBACK (motion_notify_event_cb), NULL);
 
@@ -397,5 +675,7 @@ int sotc_state_canvas_update(struct sotc_model *model_,
                              struct sotc_region *region)
 {
     model = model_;
+    current_region = model->root;
+    current_region->draw_as_root = true;
     return SOTC_OK;
 }

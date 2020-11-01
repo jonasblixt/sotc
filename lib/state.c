@@ -110,7 +110,7 @@ int sotc_state_serialize(struct sotc_state *state, json_object *region,
     char s_uuid_str[37];
     json_object *j_state = json_object_new_object();
     json_object *j_name = json_object_new_string(state->name);
-    json_object *j_kind = json_object_new_string("state");
+    json_object *j_kind;
     json_object *j_region = json_object_new_array();
     json_object *j_transitions = json_object_new_array();
 
@@ -122,7 +122,53 @@ int sotc_state_serialize(struct sotc_state *state, json_object *region,
 
     json_object_object_add(j_state, "id", j_id);
     json_object_object_add(j_state, "name", j_name);
+
+    switch (state->kind) {
+        case SOTC_STATE_NORMAL:
+            j_kind = json_object_new_string("state");
+        break;
+        case SOTC_STATE_INIT:
+            j_kind = json_object_new_string("init");
+        break;
+        case SOTC_STATE_FINAL:
+            j_kind = json_object_new_string("final");
+        break;
+        case SOTC_STATE_SHALLOW_HISTORY:
+            j_kind = json_object_new_string("shallow-history");
+        break;
+        case SOTC_STATE_DEEP_HISTORY:
+            j_kind = json_object_new_string("deep-history");
+        break;
+        case SOTC_STATE_EXIT_POINT:
+            j_kind = json_object_new_string("exit-point");
+        break;
+        case SOTC_STATE_ENTRY_POINT:
+            j_kind = json_object_new_string("entry-point");
+        break;
+        case SOTC_STATE_JOIN:
+            j_kind = json_object_new_string("join");
+        break;
+        case SOTC_STATE_FORK:
+            j_kind = json_object_new_string("fork");
+        break;
+        case SOTC_STATE_CHOICE:
+            j_kind = json_object_new_string("choice");
+        break;
+        case SOTC_STATE_JUNCTION:
+            j_kind = json_object_new_string("junction");
+        break;
+        case SOTC_STATE_TERMINATE:
+            j_kind = json_object_new_string("terminate");
+        break;
+        default:
+            L_ERR("Unknown state type %i", state->kind);
+            rc = -1;
+            goto err_out;
+    }
+
+
     json_object_object_add(j_state, "kind", j_kind);
+
 
     json_object_object_add(j_state, "width",
                 json_object_new_double(state->w));
@@ -190,6 +236,7 @@ int sotc_state_deserialize(struct sotc_model *model,
     json_object *j_entry = NULL;
     json_object *j_exit = NULL;
     json_object *j_id = NULL;
+    json_object *j_state_kind = NULL;
     json_object *jobj;
 
     state = malloc(sizeof(struct sotc_state));
@@ -211,6 +258,50 @@ int sotc_state_deserialize(struct sotc_model *model,
         rc = -SOTC_ERR_PARSE;
         goto err_out;
     }
+
+    if (!json_object_object_get_ex(j_state, "kind", &j_state_kind))
+    {
+        L_ERR("Missing kind property, aborting");
+        rc = -SOTC_ERR_PARSE;
+        goto err_out;
+    }
+
+    const char *state_kind = json_object_get_string(j_state_kind);
+
+    if (strcmp(state_kind, "state") == 0) {
+        state->kind = SOTC_STATE_NORMAL;
+        state->resizeable = true;
+    } else if (strcmp(state_kind, "init") == 0) {
+        state->kind = SOTC_STATE_INIT;
+    } else if (strcmp(state_kind, "final") == 0) {
+        state->kind = SOTC_STATE_FINAL;
+    } else if (strcmp(state_kind, "shallow-history") == 0) {
+        state->kind = SOTC_STATE_SHALLOW_HISTORY;
+    } else if (strcmp(state_kind, "deep-history") == 0) {
+        state->kind = SOTC_STATE_DEEP_HISTORY;
+    } else if (strcmp(state_kind, "exit-point") == 0) {
+        state->kind = SOTC_STATE_EXIT_POINT;
+    } else if (strcmp(state_kind, "entry-point") == 0) {
+        state->kind = SOTC_STATE_ENTRY_POINT;
+    } else if (strcmp(state_kind, "join") == 0) {
+        state->kind = SOTC_STATE_JOIN;
+        state->resizeable = true;
+    } else if (strcmp(state_kind, "fork") == 0) {
+        state->kind = SOTC_STATE_FORK;
+        state->resizeable = true;
+    } else if (strcmp(state_kind, "choice") == 0) {
+        state->kind = SOTC_STATE_CHOICE;
+        state->resizeable = true;
+    } else if (strcmp(state_kind, "junction") == 0) {
+        state->kind = SOTC_STATE_JUNCTION;
+    } else if (strcmp(state_kind, "terminate") == 0) {
+        state->kind = SOTC_STATE_TERMINATE;
+    } else {
+        L_ERR("Unknown state kind '%s'", state_kind);
+        rc = -SOTC_ERR_PARSE;
+        goto err_out;
+    }
+
 
     if (!json_object_object_get_ex(j_state, "x", &jobj))
         state->x = 0;

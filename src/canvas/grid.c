@@ -3,7 +3,10 @@
 int sotc_canvas_render_grid(cairo_t *cr, int width, int height)
 {
     /* clear background */
-    cairo_set_source_rgb(cr, 1,1,1);
+    //A
+    //cairo_set_source_rgb(cr, 1,1,1);
+
+    sotc_color_set(cr, SOTC_COLOR_BG);
     cairo_paint(cr);
 
     cairo_save(cr);
@@ -20,7 +23,8 @@ int sotc_canvas_render_grid(cairo_t *cr, int width, int height)
         cairo_line_to (cr, width, y*10);
     }
 
-    cairo_set_source_rgb (cr, 0.9,0.9,0.9);
+    //cairo_set_source_rgb (cr, 0.9,0.9,0.9);
+    sotc_color_set(cr, SOTC_COLOR_GRID);
     cairo_set_line_width(cr, 1);
     cairo_stroke (cr);
 

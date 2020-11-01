@@ -7,6 +7,12 @@
 #include "canvas/view.h"
 
 static double scale = 1.7;
+static double selection_sx;
+static double selection_sy;
+static double selection_ex;
+static double selection_ey;
+static bool draw_selection;
+static double pan_x, pan_y;
 
 bool sotc_region_is_root_or_offpage(struct sotc_region *r)
 {
@@ -28,9 +34,15 @@ int sotc_get_region_absolute_coords(struct sotc_region *r, double *x,
     double x_acc = 0.0;
     double y_acc = 0.0;
 
+    if (r->draw_as_root) {
+        *x = 0;
+        *y = 0;
+        *h = 1190;
+        *w = 1684;
+        return SOTC_OK;
+    }
+
     while (pr) {
-        if (sotc_region_is_root_or_offpage(pr))
-            break;
         if (!pr->parent_state)
             break;
         ps = pr->parent_state;
@@ -43,14 +55,8 @@ int sotc_get_region_absolute_coords(struct sotc_region *r, double *x,
 
     *x = x_acc;
     *y = y_acc;
-
-    if (r->parent_state) {
-        *h = r->parent_state->h - 30.0;
-        *w = r->parent_state->w;
-    } else {
-        *h = 1190;
-        *w = 1684;
-    }
+    *h = r->parent_state->h - 30.0;
+    *w = r->parent_state->w;
 
     return 0;
 }
@@ -92,8 +98,8 @@ int sotc_canvas_scale(double scale_change)
 {
     scale += scale_change;
 
-    if (scale < 0.0)
-        scale = 0.0;
+    if (scale < 0.1)
+        scale = 0.1;
 
     printf("scale = %f\n", scale);
 }
@@ -107,10 +113,12 @@ int sotc_canvas_render(cairo_t *cr, struct sotc_region *root,
                         int width, int height)
 {
     int rc;
+    double x, y, w, h;
     struct sotc_region *r, *r2;
     struct sotc_state *s;
     static struct sotc_stack *stack;
 
+    cairo_translate(cr, pan_x, pan_y);
     cairo_scale(cr, scale, scale);
 
     sotc_canvas_render_grid(cr, 1684, 1190);
@@ -126,6 +134,9 @@ int sotc_canvas_render(cairo_t *cr, struct sotc_region *root,
     while (sotc_stack_pop(stack, (void *) &r) == SOTC_OK)
     {
         sotc_canvas_render_region(cr, r);
+
+        if (r->off_page && (!r->draw_as_root))
+            continue;
 
         for (s = r->state; s; s = s->next)
         {
@@ -148,6 +159,9 @@ int sotc_canvas_render(cairo_t *cr, struct sotc_region *root,
             sotc_canvas_render_transition(cr, s->transition);
             for (r2 = s->regions; r2; r2 = r2->next)
             {
+                if (r2->off_page)
+                    continue;
+
                 sotc_stack_push(stack, (void *) r2);
             }
         }
@@ -155,5 +169,48 @@ int sotc_canvas_render(cairo_t *cr, struct sotc_region *root,
 
     sotc_stack_free(stack);
 
+    /* Draw selection overlay */
+
+    double dashes[] = {10.0,  /* ink */
+                       20.0};  /* skip */
+
+    if (draw_selection) {
+        cairo_save(cr);
+        //cairo_set_source_rgb (cr, 0.4, 0.4, 0.4);
+        sotc_color_set(cr, SOTC_COLOR_ACCENT);
+        cairo_set_dash (cr, dashes, 2, 0);
+        cairo_set_line_width (cr, 1);
+        cairo_rectangle (cr, selection_sx,
+                             selection_sy,
+                             selection_ex - selection_sx,
+                             selection_ey - selection_sy);
+        cairo_stroke (cr);
+        cairo_restore (cr);
+    }
     return rc;
+}
+
+int sotc_canvas_set_selection(bool active, double sx,
+                                           double sy,
+                                           double ex,
+                                           double ey)
+{
+    draw_selection = active;
+    selection_sx = sx;
+    selection_sy = sy;
+    selection_ex = ex;
+    selection_ey = ey;
+}
+
+int sotc_canvas_pan(double dx, double dy)
+{
+    pan_x += dx;
+    pan_y += dy;
+    L_DEBUG("pan <%f, %f>", pan_x, pan_y);
+}
+
+int sotc_canvas_get_offset(double *x, double *y)
+{
+    (*x) = pan_x;
+    (*y) = pan_y;
 }
