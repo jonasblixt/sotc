@@ -178,9 +178,9 @@
         "region":[
           {
             "id":"75b66945-486d-4dc8-906f-5ad6977ecd7f",
-            "name":"B off-page region",
+            "name":"B off-page region 2",
             "off_page":true,
-            "height":-1,
+            "height":100,
             "states":[
               {
                 "id":"501ddf12-81db-4b40-9cdb-a0104f75df0e",
@@ -262,6 +262,14 @@
                 ]
               },
             ],
+          },
+          {
+            "id":"92a4d09c-f3bf-475f-89ff-8efca8fd2cb4",
+            "name":"B off-page region 1",
+            "off_page":true,
+            "height":80,
+            "states":[
+            ]
           }
         ],
         "transitions":[

@@ -46,7 +46,11 @@ int transition_calc_begin_end_point(struct sotc_state *s,
 int sotc_canvas_render_transition(cairo_t *cr,
                                   struct sotc_transition *transitions)
 {
+    const double dashes[] = {10.0,  /* ink */
+                             10.0};  /* skip */
     double begin_x, begin_y, end_x, end_y;
+    cairo_text_extents_t extents;
+
     if (transitions == NULL)
         return SOTC_OK;
 
@@ -116,18 +120,19 @@ int sotc_canvas_render_transition(cairo_t *cr,
         cairo_set_font_size (cr, 18);
         //cairo_set_source_rgb (cr, 0,0,0);
         sotc_color_set(cr, SOTC_COLOR_NORMAL);
-        cairo_move_to (cr, rx + t->text_block_coords.x,
-                           ry + t->text_block_coords.y);
 
         enum sotc_state_kind source_kind = t->source.state->kind;
 
         if (source_kind == SOTC_STATE_NORMAL) {
             snprintf(text, sizeof(text), "%s [%s] / %s",
-                        t->trigger->name, "", "");
+                        t->trigger?t->trigger->name:"", "", "");
         } else if (source_kind == SOTC_STATE_INIT) {
             snprintf(text, sizeof(text), "/ %s", "");
         }
 
+        cairo_text_extents (cr, text, &extents);
+        cairo_move_to (cr, rx + t->text_block_coords.x,
+                           ry + t->text_block_coords.y + extents.height);
         cairo_show_text (cr, text);
         cairo_restore(cr);
 
@@ -159,6 +164,32 @@ int sotc_canvas_render_transition(cairo_t *cr,
             cairo_rectangle (cr, end_x - 5, end_y - 5, 10, 10);
             cairo_fill(cr);
             cairo_restore(cr);
+
+            /* Dashed rectangle around the text block */
+            double tx, ty, th, tw;
+            tx = t->text_block_coords.x;
+            ty = t->text_block_coords.y;
+            th = t->text_block_coords.h;
+            tw = t->text_block_coords.w;
+
+            cairo_save(cr);
+            sotc_color_set(cr, SOTC_COLOR_ACCENT);
+            cairo_set_dash (cr, dashes, 2, 0);
+            cairo_set_line_width (cr, 2);
+            cairo_rectangle (cr, tx, ty, tw, th);
+            cairo_stroke (cr);
+            cairo_restore (cr);
+            /* Draw resize boxes for the text block */
+
+            cairo_save(cr);
+            sotc_color_set(cr, SOTC_COLOR_ACCENT);
+            cairo_rectangle (cr, tx - 5, ty - 5, 10, 10);
+            cairo_rectangle (cr, tx + tw - 5, ty - 5, 10, 10);
+            cairo_rectangle (cr, tx + tw - 5, ty + th - 5, 10, 10);
+            cairo_rectangle (cr, tx - 5, ty + th - 5, 10, 10);
+            cairo_fill(cr);
+            cairo_restore(cr);
+
         }
 
     }

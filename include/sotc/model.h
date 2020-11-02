@@ -39,6 +39,7 @@ enum sotc_action_kind
 
 enum sotc_side
 {
+    SOTC_SIDE_NONE,
     SOTC_SIDE_LEFT,
     SOTC_SIDE_RIGHT,
     SOTC_SIDE_TOP,
@@ -243,8 +244,7 @@ int sotc_state_add_transition(struct sotc_state *source,
                               struct sotc_state *dest,
                               struct sotc_transition **transition);
 
-int sotc_state_delete_transition(struct sotc_state *source,
-                                 struct sotc_transition *transition);
+int sotc_state_delete_transition(struct sotc_transition *transition);
 
 int sotc_state_get_transitions(struct sotc_state *state,
                                struct sotc_transition **transitions);

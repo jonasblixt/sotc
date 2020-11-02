@@ -61,5 +61,15 @@ int sotc_canvas_render_region(cairo_t *cr, struct sotc_region *region)
         cairo_restore(cr);
     }
 
+    /* Render resize boxes */
+    if (region->focus) {
+        cairo_save(cr);
+        sotc_color_set(cr, SOTC_COLOR_ACCENT);
+        cairo_rectangle (cr, x + w/2 - 5, y - 5, 10, 10);
+        cairo_rectangle (cr, x + w/2 - 5, y + h - 5, 10, 10);
+        cairo_fill(cr);
+        cairo_restore(cr);
+    }
+
     return 0;
 }

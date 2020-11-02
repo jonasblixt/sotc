@@ -527,15 +527,18 @@ int sotc_state_add_transition(struct sotc_state *source,
 
         while (t_tmp->next)
             t_tmp = t_tmp->next;
+
         t_tmp->next = t;
     }
 
     return SOTC_OK;
 }
 
-int sotc_state_delete_transition(struct sotc_state *source,
-                                 struct sotc_transition *transition)
+int sotc_state_delete_transition(struct sotc_transition *transition)
 {
+    struct sotc_state *s = transition->source.state;
+
+
     return SOTC_OK;
 }
 

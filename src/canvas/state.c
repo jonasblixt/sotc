@@ -161,7 +161,6 @@ static int render_normal_state(cairo_t *cr, struct sotc_state *state)
 
     if (state->focus) {
         cairo_save(cr);
-
         sotc_color_set(cr, SOTC_COLOR_ACCENT);
         cairo_rectangle (cr, (x + w/2) - 5, y - 5, 10, 10);     /* Top */
         cairo_rectangle (cr, (x + w/2) - 5, y + h - 5, 10, 10); /* Bot */
@@ -214,4 +213,106 @@ int sotc_canvas_state_translate(struct sotc_state *s, double dx, double dy)
             }
         }
     }
+}
+
+int sotc_state_get_at_xy(struct sotc_region *region, double px, double py,
+                            struct sotc_state **out, int *depth)
+{
+    int d = 0;
+    static struct sotc_stack *stack;
+    struct sotc_region *r, *r2;
+    struct sotc_state *s;
+    bool found_state = false;
+    double x, y, w, h;
+    double ox, oy;
+
+    sotc_canvas_get_offset(&ox, &oy);
+
+    ox = ox / sotc_canvas_get_scale();
+    oy = oy / sotc_canvas_get_scale();
+
+    sotc_stack_init(&stack, SOTC_MAX_R_S);
+    sotc_stack_push(stack, region);
+
+    while (sotc_stack_pop(stack, (void **) &r) == SOTC_OK)
+    {
+        if (r->off_page && !r->draw_as_root)
+            continue;
+        d++;
+
+        for (s = r->state; s; s = s->next)
+        {
+            sotc_get_state_absolute_coords(s, &x, &y, &w, &h);
+
+            x += ox;
+            y += oy;
+
+            if ( (px > (x-5)) && (px < (x + w + 5)) &&
+                 (py > (y-5)) && (py < (y + h + 5))) {
+
+                 L_DEBUG("State '%s' selected", s->name);
+                 (*out) = s;
+                 found_state = true;
+            }
+            for (r2 = s->regions; r2; r2 = r2->next)
+            {
+                sotc_stack_push(stack, r2);
+            }
+        }
+    }
+
+    if (depth != NULL)
+        (*depth) = d;
+
+    if (found_state)
+        return SOTC_OK;
+    else
+        return -SOTC_ERROR;
+}
+
+int sotc_state_get_closest_side(struct sotc_state *s, double px, double py,
+                                    enum sotc_side *side, double *offset)
+{
+    double x, y, w, h;
+    double ox, oy;
+    double d, d2;
+
+    sotc_get_state_absolute_coords(s, &x, &y, &w, &h);
+    sotc_canvas_get_offset(&ox, &oy);
+
+    ox = ox / sotc_canvas_get_scale();
+    oy = oy / sotc_canvas_get_scale();
+
+    x += ox;
+    y += oy;
+
+    /* Top segment */
+    d = fabs(distance_point_to_seg(px, py, x, y, x + w, y));
+    *side = SOTC_SIDE_TOP;
+
+    /* Right segment */
+    d2 = fabs(distance_point_to_seg(px, py, x + w, y, x + w, y + h));
+
+    if (d2 < d) {
+        d = d2;
+        *side = SOTC_SIDE_RIGHT;
+    }
+
+    /* Bottom segment */
+    d2 = fabs(distance_point_to_seg(px, py, x, y + h, x + w, y + h));
+
+    if (d2 < d) {
+        d = d2;
+        *side = SOTC_SIDE_BOTTOM;
+    }
+
+    /* Left segment */
+    d2 = fabs(distance_point_to_seg(px, py, x, y, x, y + h));
+
+    if (d2 < d) {
+        d = d2;
+        *side = SOTC_SIDE_LEFT;
+    }
+
+    return SOTC_OK;
 }

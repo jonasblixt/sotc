@@ -42,6 +42,7 @@ int sotc_get_region_absolute_coords(struct sotc_region *r, double *x,
         return SOTC_OK;
     }
 
+    /* Calculate offsets to current state */
     while (pr) {
         if (!pr->parent_state)
             break;
@@ -53,9 +54,29 @@ int sotc_get_region_absolute_coords(struct sotc_region *r, double *x,
         pr = ps->parent_region;
     }
 
+    /* Iterate through possible sibling regions */
+    ps = r->parent_state;
+
+    if (ps) {
+        pr = ps->regions;
+
+        while (pr) {
+            if (pr == r)
+                break;
+            y_acc += pr->h;
+            pr = pr->next;
+        }
+    }
+
+
     *x = x_acc;
     *y = y_acc;
-    *h = r->parent_state->h - 30.0;
+
+    if (r->h == -1) {
+        *h = r->parent_state->h - 30.0;
+    } else {
+        *h = r->h;
+    }
     *w = r->parent_state->w;
 
     return 0;
@@ -213,4 +234,43 @@ int sotc_canvas_get_offset(double *x, double *y)
 {
     (*x) = pan_x;
     (*y) = pan_y;
+}
+
+double distance_point_to_seg(double px, double py,
+                            double sx, double sy,
+                            double ex, double ey)
+{
+    double A = px - sx;
+    double B = py - sy;
+    double C = ex - sx;
+    double D = ey - sy;
+
+    double dot = A * C + B * D;
+    double len_sq = C * C + D * D;
+    double param = -1;
+
+    if (len_sq != 0) //in case of 0 length line
+        param = dot / len_sq;
+
+    double xx, yy;
+
+    if (param < 0) {
+        xx = sx;
+        yy = sy;
+    } else if (param > 1) {
+        xx = ex;
+        yy = ey;
+    } else {
+        xx = sx + param * C;
+        yy = sy + param * D;
+    }
+
+    double dx = px - xx;
+    double dy = py - yy;
+/*
+    printf("distance from <%f, %f> to line <<%f, %f>, <%f, %f>>\n",
+            px, py, sx, sy, ex, ey);
+*/
+
+    return sqrt(dx * dx + dy * dy);
 }

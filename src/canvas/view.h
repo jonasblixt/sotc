@@ -91,4 +91,14 @@ int sotc_canvas_pan(double dx, double dy);
 
 int sotc_canvas_get_offset(double *x, double *y);
 
+
+int sotc_state_get_at_xy(struct sotc_region *r, double px, double py,
+                            struct sotc_state **out, int *depth);
+
+int sotc_state_get_closest_side(struct sotc_state *s, double px, double py,
+                                    enum sotc_side *side, double *offset);
+
+double distance_point_to_seg(double px, double py,
+                            double sx, double sy,
+                            double ex, double ey);
 #endif  // CANVAS_VIEW_H_

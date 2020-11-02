@@ -20,6 +20,22 @@ static double canvas_ox, canvas_oy;
 static bool pan_mode;
 static enum sotc_state_resize_selector selected_state_corner;
 
+/* Create transition variables */
+static bool add_vertice_flag;
+static struct sotc_state *source_state, *dest_state;
+static double source_offset, dest_offset;
+static enum sotc_side source_side, dest_side;
+
+enum sotc_controller_state {
+    STATE_IDLE,
+    STATE_ADD,
+    STATE_ADD_TRANSITION,
+    STATE_ADD_TRANSITION2,
+    STATE_ADD_STATE,
+};
+
+static enum sotc_controller_state controller_state;
+
 static void draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data)
 {
     int rc;
@@ -49,6 +65,7 @@ gboolean keyrelease_cb(GtkWidget *widget, GdkEventKey *event, gpointer data)
 {
     if (event->keyval == GDK_KEY_Shift_L)
     {
+        add_vertice_flag = false;
         pan_mode = false;
         return TRUE;
     }
@@ -56,75 +73,112 @@ gboolean keyrelease_cb(GtkWidget *widget, GdkEventKey *event, gpointer data)
 
 gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data)
 {
+    if (event->keyval == GDK_KEY_Escape)
+        controller_state = STATE_IDLE;
 
-    if (event->keyval == GDK_KEY_A)
-    {
-        if (current_region->parent_state) {
-            L_DEBUG("Ascending to region: %s",
-                    current_region->parent_state->parent_region->name);
-            current_region->draw_as_root = false;
-            current_region = current_region->parent_state->parent_region;
-            current_region->draw_as_root = true;
+check_new_state:
+
+    if (controller_state == STATE_ADD) {
+        if (event->keyval == GDK_KEY_t)
+            controller_state = STATE_ADD_TRANSITION;
+        else if (event->keyval == GDK_KEY_s)
+            controller_state = STATE_ADD_STATE;
+        else
+            controller_state = STATE_IDLE;
+        goto check_new_state;
+
+    } else if (controller_state == STATE_ADD_TRANSITION) {
+        L_DEBUG("Add new transition");
+    } else if (controller_state == STATE_ADD_TRANSITION2) {
+        if (event->keyval == GDK_KEY_Shift_L)
+            add_vertice_flag = true;
+    } else if (controller_state == STATE_ADD_STATE) {
+        L_DEBUG("Add new state");
+    } else if (controller_state == STATE_IDLE) {
+        if (event->keyval == GDK_KEY_A)
+        {
+            if (current_region->parent_state) {
+                L_DEBUG("Ascending to region: %s",
+                        current_region->parent_state->parent_region->name);
+                current_region->draw_as_root = false;
+                current_region = current_region->parent_state->parent_region;
+                current_region->draw_as_root = true;
+            }
+            gtk_widget_queue_draw (widget);
         }
-        gtk_widget_queue_draw (widget);
-    }
 
-    if (event->keyval == GDK_KEY_a)
-    {
-        sotc_canvas_scale(0.1);
-        gtk_widget_queue_draw (widget);
-    }
+        if (event->keyval == GDK_KEY_a)
+        {
+            controller_state = STATE_ADD;
+        }
 
-    if (event->keyval == GDK_KEY_b)
-    {
-        sotc_canvas_scale(-0.1);
-        gtk_widget_queue_draw (widget);
-    }
+        if (event->keyval == GDK_KEY_d)
+        {
+            if (selected_transition) {
+                if (selected_transition->focus) {
+                    L_DEBUG("Deleting transition from source: %s", selected_transition->source.state->name);
+                    sotc_state_delete_transition(selected_transition);
+                }
+            }
+        }
 
-    if (event->keyval == GDK_KEY_x)
-    {
-        if (selected_state)
-            selected_state->w += 10;
-        gtk_widget_queue_draw (widget);
-    }
+        if (event->keyval == GDK_KEY_Z)
+        {
+            sotc_canvas_scale(0.1);
+            gtk_widget_queue_draw (widget);
+        }
 
-    if (event->keyval == GDK_KEY_X)
-    {
-        if (selected_state)
-            selected_state->w -= 10;
-        gtk_widget_queue_draw (widget);
-    }
+        if (event->keyval == GDK_KEY_b)
+        {
+            sotc_canvas_scale(-0.1);
+            gtk_widget_queue_draw (widget);
+        }
 
-    if (event->keyval == GDK_KEY_y)
-    {
-        if (selected_state)
-            selected_state->h += 10;
-        gtk_widget_queue_draw (widget);
-    }
+        if (event->keyval == GDK_KEY_x)
+        {
+            if (selected_state)
+                selected_state->w += 10;
+            gtk_widget_queue_draw (widget);
+        }
 
-    if (event->keyval == GDK_KEY_Y)
-    {
-        if (selected_state)
-            selected_state->h -= 10;
-        gtk_widget_queue_draw (widget);
-    }
+        if (event->keyval == GDK_KEY_X)
+        {
+            if (selected_state)
+                selected_state->w -= 10;
+            gtk_widget_queue_draw (widget);
+        }
 
-    if (event->keyval == GDK_KEY_s)
-    {
-        printf("Saving...\n");
-        sotc_model_write("out.sotc", model);
-    }
+        if (event->keyval == GDK_KEY_y)
+        {
+            if (selected_state)
+                selected_state->h += 10;
+            gtk_widget_queue_draw (widget);
+        }
 
-    if (event->keyval == GDK_KEY_space)
-    {
-        printf("SPACE KEY PRESSED!\n");
-        return TRUE;
-    }
+        if (event->keyval == GDK_KEY_Y)
+        {
+            if (selected_state)
+                selected_state->h -= 10;
+            gtk_widget_queue_draw (widget);
+        }
 
-    if (event->keyval == GDK_KEY_Shift_L)
-    {
-        pan_mode = true;
-        return TRUE;
+        if (event->keyval == GDK_KEY_s)
+        {
+            printf("Saving...\n");
+            sotc_model_write("out.sotc", model);
+        }
+
+        if (event->keyval == GDK_KEY_space)
+        {
+            printf("SPACE KEY PRESSED!\n");
+            return TRUE;
+        }
+
+        if (event->keyval == GDK_KEY_Shift_L)
+        {
+            pan_mode = true;
+            return TRUE;
+        }
     }
 
     return TRUE;
@@ -259,78 +313,6 @@ static gboolean motion_notify_event_cb (GtkWidget      *widget,
     sty = ty_tmp;
     return TRUE;
 }
-/*
-static double distance_point_to_line(double px, double py,
-                                     double sx, double sy,
-                                     double ex, double ey)
-{
-    double a, b, c;
-
-    a = sy - ey;
-    b = ex - sx;
-    c = sx * ey - ex * sy;
-
-    printf("distance from <%f, %f> to line <<%f, %f>, <%f, %f>>\n",
-                px, py, sx, sy, ex, ey);
-
-    return fabs(a * px + b * py + c) / sqrt(a * a + b * b);
-}
-*/
-
-static double distance_point_to_seg(double px, double py,
-                                    double sx, double sy,
-                                    double ex, double ey)
-{
-    double A = px - sx;
-    double B = py - sy;
-    double C = ex - sx;
-    double D = ey - sy;
-
-    double dot = A * C + B * D;
-    double len_sq = C * C + D * D;
-    double param = -1;
-
-    if (len_sq != 0) //in case of 0 length line
-        param = dot / len_sq;
-
-    double xx, yy;
-
-    if (param < 0) {
-        xx = sx;
-        yy = sy;
-    } else if (param > 1) {
-        xx = ex;
-        yy = ey;
-    } else {
-        xx = sx + param * C;
-        yy = sy + param * D;
-    }
-
-    double dx = px - xx;
-    double dy = py - yy;
-/*
-    printf("distance from <%f, %f> to line <<%f, %f>, <%f, %f>>\n",
-            px, py, sx, sy, ex, ey);
-*/
-
-    return sqrt(dx * dx + dy * dy);
-}
-
-static int closest_state_and_side(struct sotc_model *model,
-                                  double px, double py,
-                                  double threshold,
-                                  struct sotc_state **state,
-                                  enum sotc_side *side)
-{
-
-}
-
-static int state_and_side_at_point(struct sotc_model *model,
-                                   double px, double py,
-                                   struct sotc_state **state,
-                                   enum sotc_side *side)
-{
-}
 
 gboolean buttonrelease_cb(GtkWidget *widget, GdkEventButton *event)
 {
@@ -377,6 +359,44 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
     ox = ox / sotc_canvas_get_scale();
     oy = oy / sotc_canvas_get_scale();
 
+    if (controller_state == STATE_ADD_TRANSITION) {
+        L_DEBUG("Looking for source state at <%f, %f>", px, py);
+
+        rc = sotc_state_get_at_xy(current_region, px, py, &source_state, NULL);
+
+        if (rc == SOTC_OK) {
+            controller_state = STATE_ADD_TRANSITION2;
+            sotc_state_get_closest_side(source_state, px, py, &source_side, NULL);
+            L_DEBUG("Side = %i", source_side);
+        } else {
+            controller_state = STATE_IDLE;
+        }
+        return TRUE;
+    } else if (controller_state == STATE_ADD_TRANSITION2) {
+        if (add_vertice_flag) {
+            L_DEBUG("Add vertice at <%f, %f>", px, py);
+        } else {
+            L_DEBUG("Looking for dest state at <%f, %f>", px, py);
+
+            rc = sotc_state_get_at_xy(current_region, px, py, &dest_state, NULL);
+
+            if (rc == SOTC_OK) {
+
+                sotc_state_get_closest_side(dest_state, px, py, &dest_side, NULL);
+                L_DEBUG("Creating transition %s --> %s", source_state->name,
+                                                         dest_state->name);
+                struct sotc_transition *new_transition;
+                sotc_state_add_transition(source_state, dest_state, &new_transition);
+                new_transition->source.side = source_side;
+                new_transition->dest.side = dest_side;
+            }
+            controller_state = STATE_IDLE;
+        }
+        return TRUE;
+    }
+
+
+
     sotc_stack_init(&stack, SOTC_MAX_R_S);
     sotc_stack_push(stack, current_region);
 
@@ -391,11 +411,18 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
         L_DEBUG("Checking region '%s' %f, %f, %f, %f", r->name,
                         x, y, w ,h);
         if ( (px > (x + 5)) && (px < (x + w - 5)) &&
-             (py > (y + 5)) && (py < (y + h - 5))) {
+             (py > (y)) && (py < (y + h))) {
 
-            L_DEBUG("Region '%s' selected", r->name);
+             L_DEBUG("Region '%s' selected", r->name);
              selected_region = r;
              last_object_state = false;
+        }
+
+        /* Check region resize boxes */
+        if (selected_region) {
+            if (point_in_box(px, py, x + w/2 - 5, y + h - 5, 20, 20)) {
+                L_DEBUG("Region bottom resize box");
+            }
         }
 
         if (r->off_page && !r->draw_as_root)
@@ -560,6 +587,18 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
                 if (d < 10.0)
                     t_focus = true;
 
+                sotc_get_region_absolute_coords(t->source.state->parent_region,
+                                                   &x, &y, &w, &h);
+                double tx = t->text_block_coords.x + x;
+                double ty = t->text_block_coords.y + y;
+                double tw = t->text_block_coords.w;
+                double th = t->text_block_coords.h;
+
+                if (point_in_box(px, py, tx, ty, tw, th)) {
+                    L_DEBUG("Text-box selected");
+                    t_focus = true;
+                }
+
                 if (t_focus) {
                     printf("Transition is focused!\n");
                     selected_transition = t;
@@ -622,6 +661,7 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
     } else {
         selected_vertice_kind = SOTC_TRANSITION_VERTICE_NONE;
     }
+
 
 controller_out:
     sotc_stack_free(stack);
