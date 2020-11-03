@@ -880,30 +880,32 @@ int sotc_model_free(struct sotc_model *model)
     if (rc != SOTC_OK)
         return rc;
 
-    sotc_stack_push(stack, model->root);
+    if (model->root) {
+        sotc_stack_push(stack, model->root);
 
-    while (sotc_stack_pop(stack, (void **) &r) == SOTC_OK)
-    {
-        L_DEBUG("loop %p", r->state);
-        sotc_stack_push(free_stack, r);
-        if (r->name)
+        while (sotc_stack_pop(stack, (void **) &r) == SOTC_OK)
         {
-            free((void *) r->name);
-        }
-
-        for (s = r->state; s; s = s->next)
-        {
-            L_DEBUG("Found state '%s'", s->name);
-            sotc_stack_push(free_stack, s);
-            free_action_ref_list(s->entries);
-            free_action_ref_list(s->exits);
-            sotc_transition_free(s->transition);
-            free((void *) s->name);
-
-            for (r2 = s->regions; r2; r2 = r2->next)
+            L_DEBUG("loop %p", r->state);
+            sotc_stack_push(free_stack, r);
+            if (r->name)
             {
-                L_DEBUG("Found region '%s'", r2->name);
-                sotc_stack_push(stack, (void *) r2);
+                free((void *) r->name);
+            }
+
+            for (s = r->state; s; s = s->next)
+            {
+                L_DEBUG("Found state '%s'", s->name);
+                sotc_stack_push(free_stack, s);
+                free_action_ref_list(s->entries);
+                free_action_ref_list(s->exits);
+                sotc_transition_free(s->transition);
+                free((void *) s->name);
+
+                for (r2 = s->regions; r2; r2 = r2->next)
+                {
+                    L_DEBUG("Found region '%s'", r2->name);
+                    sotc_stack_push(stack, (void *) r2);
+                }
             }
         }
     }
