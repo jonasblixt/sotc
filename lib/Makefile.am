@@ -15,3 +15,10 @@ libsotc_la_CFLAGS = -I$(top_srcdir)/include \
 libsotc_la_LIBS = $(JSONC_LIBS) \
                   $(UUID_LIBS) \
                   $(CODE_COVERAGE_LIBS)
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = sotc.pc
+
+pkginclude_HEADERS = $(top_srcdir)/include/sotc/sotc.h \
+                     $(top_srcdir)/include/sotc/model.h \
+                     $(top_srcdir)/include/sotc/stack.h

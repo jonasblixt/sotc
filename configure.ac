@@ -78,7 +78,8 @@ AM_CONDITIONAL([OSX], [test "$build_mac" = "yes"])
 AC_CONFIG_FILES([Makefile
                 lib/Makefile
                 src/Makefile
-                test/Makefile])
+                test/Makefile
+                lib/sotc.pc])
 
 dnl Dependencies build
 dnl AC_CONFIG_SUBDIRS([deps/dep1])
