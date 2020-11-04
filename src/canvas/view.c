@@ -236,9 +236,10 @@ int sotc_canvas_get_offset(double *x, double *y)
     (*y) = pan_y;
 }
 
-double distance_point_to_seg(double px, double py,
+double distance_point_to_seg2(double px, double py,
                             double sx, double sy,
-                            double ex, double ey)
+                            double ex, double ey,
+                            double *x_out, double *y_out)
 {
     double A = px - sx;
     double B = py - sy;
@@ -272,5 +273,18 @@ double distance_point_to_seg(double px, double py,
             px, py, sx, sy, ex, ey);
 */
 
+    if (x_out)
+        *x_out = xx;
+    if (y_out)
+        *y_out = yy;
+
     return sqrt(dx * dx + dy * dy);
+}
+
+
+double distance_point_to_seg(double px, double py,
+                            double sx, double sy,
+                            double ex, double ey)
+{
+    return distance_point_to_seg2(px, py, sx, sy, ex, ey, NULL, NULL);
 }

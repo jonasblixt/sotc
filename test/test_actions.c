@@ -216,7 +216,9 @@ TEST(add_entry_action_to_state)
                                      "test-action", &action);
     ASSERT_EQ(rc, SOTC_OK);
 
-    rc = sotc_state_add_entry(model, a, action->id);
+    uuid_t uu;
+    uuid_generate_random(uu);
+    rc = sotc_state_add_entry(model, a, uu, action->id);
     ASSERT_EQ(rc, SOTC_OK);
 
     rc = sotc_model_write("test_add_entry_to_state.sotc", model);
@@ -271,7 +273,9 @@ TEST(delete_entry_action_from_state)
                                      "test-action", &action);
     ASSERT_EQ(rc, SOTC_OK);
 
-    rc = sotc_state_add_entry(model, a, action->id);
+    uuid_t uu;
+    uuid_generate_random(uu);
+    rc = sotc_state_add_entry(model, a, uu, action->id);
     ASSERT_EQ(rc, SOTC_OK);
 
     rc = sotc_model_write("test_delete_entry_from_state.sotc", model);
@@ -329,7 +333,9 @@ TEST(multiple_actions1)
                                      "test-action-1", &action);
     ASSERT_EQ(rc, SOTC_OK);
 
-    rc = sotc_state_add_entry(model, a, action->id);
+    uuid_t uu;
+    uuid_generate_random(uu);
+    rc = sotc_state_add_entry(model, a, uu, action->id);
     ASSERT_EQ(rc, SOTC_OK);
 
     /* Add first second action */
@@ -337,7 +343,8 @@ TEST(multiple_actions1)
                                      "test-action-2", &action);
     ASSERT_EQ(rc, SOTC_OK);
 
-    rc = sotc_state_add_entry(model, a, action->id);
+    uuid_generate_random(uu);
+    rc = sotc_state_add_entry(model, a, uu, action->id);
     ASSERT_EQ(rc, SOTC_OK);
 
     /* Add first third action */
@@ -345,7 +352,8 @@ TEST(multiple_actions1)
                                      "test-action-3", &action);
     ASSERT_EQ(rc, SOTC_OK);
 
-    rc = sotc_state_add_entry(model, a, action->id);
+    uuid_generate_random(uu);
+    rc = sotc_state_add_entry(model, a, uu, action->id);
     ASSERT_EQ(rc, SOTC_OK);
 
     rc = sotc_model_write("test_multiple_actions1.sotc", model);

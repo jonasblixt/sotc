@@ -101,4 +101,9 @@ int sotc_state_get_closest_side(struct sotc_state *s, double px, double py,
 double distance_point_to_seg(double px, double py,
                             double sx, double sy,
                             double ex, double ey);
+
+double distance_point_to_seg2(double px, double py,
+                            double sx, double sy,
+                            double ex, double ey,
+                            double *x_out, double *y_out);
 #endif  // CANVAS_VIEW_H_

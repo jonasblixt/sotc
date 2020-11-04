@@ -64,6 +64,7 @@ struct sotc_action
 
 struct sotc_action_ref
 {
+    uuid_t id;
     struct sotc_action *act;
     struct sotc_action_ref *next;
 };
@@ -117,6 +118,7 @@ struct sotc_transition
     struct sotc_vertice *vertices;
     struct sotc_transition_state_condition *state_conditions;
     bool focus;
+    struct sotc_transition *prev;
     struct sotc_transition *next;
 };
 
@@ -131,6 +133,7 @@ struct sotc_region
     struct sotc_state *state;
     struct sotc_state *parent_state;
     struct sotc_state *last_state;
+    struct sotc_region *prev;
     struct sotc_region *next;
 };
 
@@ -152,6 +155,7 @@ struct sotc_state
     struct sotc_region *regions;
     struct sotc_region *parent_region;
     struct sotc_region *last_region;
+    struct sotc_state *prev;
     struct sotc_state *next;
 };
 
@@ -221,16 +225,20 @@ int sotc_region_get_height(struct sotc_region *r, double *h);
 
 /* State api */
 
+int sotc_delete_state(struct sotc_state *state);
+
 int sotc_add_state(struct sotc_region *region, const char *name,
                     struct sotc_state **out);
 
 int sotc_state_add_entry(struct sotc_model *model,
                          struct sotc_state *state,
-                         uuid_t id);
+                         uuid_t id,
+                         uuid_t action_id);
 
 int sotc_state_add_exit(struct sotc_model *model,
                         struct sotc_state *state,
-                        uuid_t id);
+                        uuid_t id,
+                        uuid_t action_id);
 
 int sotc_state_delete_entry(struct sotc_state *state, uuid_t id);
 int sotc_state_delete_exit(struct sotc_state *state, uuid_t id);
@@ -282,14 +290,16 @@ int sotc_transition_set_trigger(struct sotc_model *model,
 
 int sotc_transition_add_guard(struct sotc_model *model,
                               struct sotc_transition *transition,
-                              uuid_t id);
+                              uuid_t id,
+                              uuid_t action_id);
 
 int sotc_transition_delete_guard(struct sotc_transition *transition, uuid_t id);
 struct sotc_action_ref *sotc_transition_get_guards(struct sotc_transition *t);
 
 int sotc_transition_add_action(struct sotc_model *model,
                                struct sotc_transition *transition,
-                               uuid_t id);
+                               uuid_t id,
+                               uuid_t action_id);
 
 int sotc_transition_delete_action(struct sotc_transition *transition, uuid_t id);
 struct sotc_action_ref *sotc_transition_get_actions(struct sotc_transition *t);

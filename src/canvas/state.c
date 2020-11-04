@@ -276,6 +276,7 @@ int sotc_state_get_closest_side(struct sotc_state *s, double px, double py,
     double x, y, w, h;
     double ox, oy;
     double d, d2;
+    double lx, ly;
 
     sotc_get_state_absolute_coords(s, &x, &y, &w, &h);
     sotc_canvas_get_offset(&ox, &oy);
@@ -287,31 +288,35 @@ int sotc_state_get_closest_side(struct sotc_state *s, double px, double py,
     y += oy;
 
     /* Top segment */
-    d = fabs(distance_point_to_seg(px, py, x, y, x + w, y));
+    d = fabs(distance_point_to_seg2(px, py, x, y, x + w, y, &lx, &ly));
     *side = SOTC_SIDE_TOP;
+    *offset = lx - x;
 
     /* Right segment */
-    d2 = fabs(distance_point_to_seg(px, py, x + w, y, x + w, y + h));
+    d2 = fabs(distance_point_to_seg2(px, py, x + w, y, x + w, y + h, &lx, &ly));
 
     if (d2 < d) {
         d = d2;
         *side = SOTC_SIDE_RIGHT;
+        *offset = ly - y;
     }
 
     /* Bottom segment */
-    d2 = fabs(distance_point_to_seg(px, py, x, y + h, x + w, y + h));
+    d2 = fabs(distance_point_to_seg2(px, py, x, y + h, x + w, y + h, &lx, &ly));
 
     if (d2 < d) {
         d = d2;
         *side = SOTC_SIDE_BOTTOM;
+        *offset = lx - x;
     }
 
     /* Left segment */
-    d2 = fabs(distance_point_to_seg(px, py, x, y, x, y + h));
+    d2 = fabs(distance_point_to_seg2(px, py, x, y, x, y + h, &lx, &ly));
 
     if (d2 < d) {
         d = d2;
         *side = SOTC_SIDE_LEFT;
+        *offset = ly - y;
     }
 
     return SOTC_OK;

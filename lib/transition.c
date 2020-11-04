@@ -184,6 +184,7 @@ int sotc_transition_deserialize(struct sotc_model *model,
     json_object *j_actions;
     json_object *j_state_conds;
     struct sotc_transition *transition;
+    struct sotc_transition *prev;
     uuid_t trigger_uu;
 
     size_t n_entries = json_object_array_length(j_transitions_list);
@@ -299,13 +300,17 @@ int sotc_transition_deserialize(struct sotc_model *model,
             {
                 json_object *j_action;
                 json_object *j_action_id;
+                json_object *j_id;
                 uuid_t action_uu;
+                uuid_t id_uu;
 
                 j_action = json_object_array_get_idx(j_actions, n);
 
-                if (json_object_object_get_ex(j_action, "id", &j_action_id)) {
+                if (json_object_object_get_ex(j_action, "action-id", &j_action_id)) {
+                    json_object_object_get_ex(j_action, "id", &j_id);
+                    uuid_parse(json_object_get_string(j_id), id_uu);
                     uuid_parse(json_object_get_string(j_action_id), action_uu);
-                    rc = sotc_transition_add_action(model, transition,
+                    rc = sotc_transition_add_action(model, transition, id_uu,
                                                     action_uu);
                     if (rc != SOTC_OK)
                         goto err_out;
@@ -322,13 +327,16 @@ int sotc_transition_deserialize(struct sotc_model *model,
             {
                 json_object *j_guard;
                 json_object *j_guard_id;
+                json_object *j_id;
                 uuid_t guard_uu;
-
+                uuid_t id_uu;
                 j_guard = json_object_array_get_idx(j_guards, n);
 
-                if (json_object_object_get_ex(j_guard, "id", &j_guard_id)) {
+                if (json_object_object_get_ex(j_guard, "action-id", &j_guard_id)) {
+                    json_object_object_get_ex(j_guard, "id", &j_id);
+                    uuid_parse(json_object_get_string(j_id), id_uu);
                     uuid_parse(json_object_get_string(j_guard_id), guard_uu);
-                    rc = sotc_transition_add_guard(model, transition,
+                    rc = sotc_transition_add_guard(model, transition, id_uu,
                                                     guard_uu);
                     if (rc != SOTC_OK)
                         goto err_out;
@@ -341,12 +349,14 @@ int sotc_transition_deserialize(struct sotc_model *model,
 
         if (state->transition == NULL) {
             state->transition = transition;
+            transition->prev = NULL;
         } else {
             struct sotc_transition *list = state->transition;
 
             while (list->next)
                 list = list->next;
             list->next = transition;
+            transition->prev = list;
         }
     }
 
@@ -581,18 +591,19 @@ int sotc_transition_set_trigger(struct sotc_model *model,
 
 int sotc_transition_add_guard(struct sotc_model *model,
                               struct sotc_transition *transition,
-                              uuid_t id)
+                              uuid_t id,
+                              uuid_t action_id)
 {
     struct sotc_action *action;
     int rc;
 
     L_DEBUG("%s", __func__);
 
-    rc = sotc_model_get_action(model, id, SOTC_ACTION_GUARD, &action);
+    rc = sotc_model_get_action(model, action_id, SOTC_ACTION_GUARD, &action);
 
     if (rc != SOTC_OK) {
         char uuid_str[37];
-        uuid_unparse(id, uuid_str);
+        uuid_unparse(action_id, uuid_str);
         L_ERR("Unkown guard function %s", uuid_str);
         return rc;
     }
@@ -604,6 +615,7 @@ int sotc_transition_add_guard(struct sotc_model *model,
         list = malloc(sizeof(struct sotc_action_ref));
         memset(list, 0, sizeof(*list));
         list->act = action;
+        memcpy(list->id, id, 16);
         transition->guard = list;
     } else {
         while (list->next)
@@ -611,6 +623,7 @@ int sotc_transition_add_guard(struct sotc_model *model,
         list->next = malloc(sizeof(struct sotc_action_ref));
         memset(list->next, 0, sizeof(*list->next));
         list->next->act = action;
+        memcpy(list->next->id, id, 16);
     }
 
     return SOTC_OK;
@@ -628,12 +641,13 @@ struct sotc_action_ref *sotc_transition_get_guards(struct sotc_transition *t)
 
 int sotc_transition_add_action(struct sotc_model *model,
                                struct sotc_transition *transition,
-                               uuid_t id)
+                               uuid_t id,
+                               uuid_t action_id)
 {
     struct sotc_action *action;
     int rc;
 
-    rc = sotc_model_get_action(model, id, SOTC_ACTION_ACTION, &action);
+    rc = sotc_model_get_action(model, action_id, SOTC_ACTION_ACTION, &action);
 
     if (rc != SOTC_OK) {
         char uuid_str[37];
@@ -649,6 +663,7 @@ int sotc_transition_add_action(struct sotc_model *model,
         list = malloc(sizeof(struct sotc_action_ref));
         memset(list, 0, sizeof(*list));
         list->act = action;
+        memcpy(list->id, id, 16);
         transition->action = list;
     } else {
         while (list->next)
@@ -656,6 +671,7 @@ int sotc_transition_add_action(struct sotc_model *model,
         list->next = malloc(sizeof(struct sotc_action_ref));
         memset(list->next, 0, sizeof(*list->next));
         list->next->act = action;
+        memcpy(list->next->id, id, 16);
     }
 
     return SOTC_OK;

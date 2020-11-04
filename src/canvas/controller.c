@@ -26,12 +26,19 @@ static struct sotc_state *source_state, *dest_state;
 static double source_offset, dest_offset;
 static enum sotc_side source_side, dest_side;
 
+/* Create state variables */
+static double new_state_sx, new_state_sy;
+static double new_state_ex, new_state_ey;
+
 enum sotc_controller_state {
     STATE_IDLE,
     STATE_ADD,
     STATE_ADD_TRANSITION,
     STATE_ADD_TRANSITION2,
-    STATE_ADD_STATE,
+    STATE_ADD_STATE1,
+    STATE_ADD_STATE2,
+    STATE_ADD_ENTRY,
+    STATE_ADD_EXIT,
 };
 
 static enum sotc_controller_state controller_state;
@@ -66,7 +73,6 @@ gboolean keyrelease_cb(GtkWidget *widget, GdkEventKey *event, gpointer data)
     if (event->keyval == GDK_KEY_Shift_L)
     {
         add_vertice_flag = false;
-        pan_mode = false;
         return TRUE;
     }
 }
@@ -79,12 +85,17 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data)
 check_new_state:
 
     if (controller_state == STATE_ADD) {
-        if (event->keyval == GDK_KEY_t)
+        if (event->keyval == GDK_KEY_t) {
             controller_state = STATE_ADD_TRANSITION;
-        else if (event->keyval == GDK_KEY_s)
-            controller_state = STATE_ADD_STATE;
-        else
+        } else if (event->keyval == GDK_KEY_s) {
+            controller_state = STATE_ADD_STATE1;
+        } else if (event->keyval == GDK_KEY_x && selected_state) {
+            controller_state = STATE_ADD_EXIT;
+        } else if (event->keyval == GDK_KEY_e && selected_state) {
+            controller_state = STATE_ADD_ENTRY;
+        } else {
             controller_state = STATE_IDLE;
+        }
         goto check_new_state;
 
     } else if (controller_state == STATE_ADD_TRANSITION) {
@@ -92,8 +103,14 @@ check_new_state:
     } else if (controller_state == STATE_ADD_TRANSITION2) {
         if (event->keyval == GDK_KEY_Shift_L)
             add_vertice_flag = true;
-    } else if (controller_state == STATE_ADD_STATE) {
+    } else if (controller_state == STATE_ADD_STATE1) {
         L_DEBUG("Add new state");
+    } else if (controller_state == STATE_ADD_ENTRY) {
+        L_DEBUG("Add entry on state %s", selected_state->name);
+        controller_state = STATE_IDLE;
+    } else if (controller_state == STATE_ADD_EXIT) {
+        L_DEBUG("Add exit on state %s", selected_state->name);
+        controller_state = STATE_IDLE;
     } else if (controller_state == STATE_IDLE) {
         if (event->keyval == GDK_KEY_A)
         {
@@ -107,17 +124,33 @@ check_new_state:
             gtk_widget_queue_draw (widget);
         }
 
+        if (event->keyval == GDK_KEY_e) {
+            if (selected_state) {
+                L_DEBUG("Edit state");
+            } else if (selected_transition) {
+                L_DEBUG("Edit transition");
+            }
+        }
+
         if (event->keyval == GDK_KEY_a)
         {
             controller_state = STATE_ADD;
         }
 
-        if (event->keyval == GDK_KEY_d)
+        if (event->keyval == GDK_KEY_Delete)
         {
             if (selected_transition) {
                 if (selected_transition->focus) {
                     L_DEBUG("Deleting transition from source: %s", selected_transition->source.state->name);
                     sotc_state_delete_transition(selected_transition);
+                    gtk_widget_queue_draw(widget);
+                }
+            } else if (selected_state) {
+                if (selected_state->focus) {
+                    L_DEBUG("Deleting state '%s'", selected_state->name);
+                    sotc_delete_state(selected_state);
+                    selected_state = NULL;
+                    gtk_widget_queue_draw(widget);
                 }
             }
         }
@@ -128,7 +161,7 @@ check_new_state:
             gtk_widget_queue_draw (widget);
         }
 
-        if (event->keyval == GDK_KEY_b)
+        if (event->keyval == GDK_KEY_z)
         {
             sotc_canvas_scale(-0.1);
             gtk_widget_queue_draw (widget);
@@ -174,11 +207,6 @@ check_new_state:
             return TRUE;
         }
 
-        if (event->keyval == GDK_KEY_Shift_L)
-        {
-            pan_mode = true;
-            return TRUE;
-        }
     }
 
     return TRUE;
@@ -195,17 +223,6 @@ static gboolean motion_notify_event_cb (GtkWidget      *widget,
 
     tx_tmp = sotc_canvas_nearest_grid_point(event->x / sotc_canvas_get_scale());
     ty_tmp = sotc_canvas_nearest_grid_point(event->y / sotc_canvas_get_scale());
-
-/*
-    if (tx_tmp == stx && ty_tmp == sty) {
-        return TRUE;
-    }
-*/
-
-    if (!(fabs(stx - selection_start_x) > 10 ||
-        fabs(sty - selection_start_y) > 10)) {
-        return TRUE;
-    }
 
     dx = tx_tmp - stx;
     dy = ty_tmp - sty;
@@ -321,7 +338,7 @@ gboolean buttonrelease_cb(GtkWidget *widget, GdkEventButton *event)
                        event->y);
 
     sotc_canvas_set_selection(false, 0, 0, 0, 0);
-
+    pan_mode = false;
     gtk_widget_queue_draw (widget);
     return TRUE;
 }
@@ -337,6 +354,7 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
     bool edit_object = false;
     int rc;
 
+
     printf("%s %f %f\n", __func__,
                        event->x,
                        event->y);
@@ -345,8 +363,8 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
 
     gtk_widget_grab_focus(widget);
 
-    selected_state = NULL;
-    selected_region = NULL;
+    //selected_state = NULL;
+    //selected_region = NULL;
 
     double px = event->x / sotc_canvas_get_scale();
     double py = event->y / sotc_canvas_get_scale();
@@ -359,6 +377,14 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
     ox = ox / sotc_canvas_get_scale();
     oy = oy / sotc_canvas_get_scale();
 
+
+    if (event->type == GDK_BUTTON_PRESS &&
+        event->button == 3) {
+        pan_mode = true;
+        L_DEBUG("pan mode");
+        return TRUE;
+    }
+
     if (controller_state == STATE_ADD_TRANSITION) {
         L_DEBUG("Looking for source state at <%f, %f>", px, py);
 
@@ -366,7 +392,8 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
 
         if (rc == SOTC_OK) {
             controller_state = STATE_ADD_TRANSITION2;
-            sotc_state_get_closest_side(source_state, px, py, &source_side, NULL);
+            sotc_state_get_closest_side(source_state, px, py, &source_side,
+                                        &source_offset);
             L_DEBUG("Side = %i", source_side);
         } else {
             controller_state = STATE_IDLE;
@@ -382,18 +409,47 @@ gboolean buttonpress_cb(GtkWidget *widget, GdkEventButton *event)
 
             if (rc == SOTC_OK) {
 
-                sotc_state_get_closest_side(dest_state, px, py, &dest_side, NULL);
+                sotc_state_get_closest_side(dest_state, px, py, &dest_side,
+                                            &dest_offset);
                 L_DEBUG("Creating transition %s --> %s", source_state->name,
                                                          dest_state->name);
                 struct sotc_transition *new_transition;
                 sotc_state_add_transition(source_state, dest_state, &new_transition);
                 new_transition->source.side = source_side;
+                new_transition->source.offset = source_offset;
                 new_transition->dest.side = dest_side;
+                new_transition->dest.offset = dest_offset;
             }
             controller_state = STATE_IDLE;
         }
         return TRUE;
+    } else if (controller_state == STATE_ADD_STATE1) {
+        L_DEBUG("Top left <%f, %f>", px, py);
+        new_state_sx = sotc_canvas_nearest_grid_point(px);
+        new_state_sy = sotc_canvas_nearest_grid_point(py);
+        controller_state = STATE_ADD_STATE2;
+        return TRUE;
+    } else if (controller_state == STATE_ADD_STATE2) {
+        L_DEBUG("Bottom right <%f, %f> %p", px, py, selected_region);
+        new_state_ex = sotc_canvas_nearest_grid_point(px);
+        new_state_ey = sotc_canvas_nearest_grid_point(py);
+        struct sotc_state *new_state = NULL;
+        rc = sotc_add_state(selected_region, "New state", &new_state);
+        if (rc == SOTC_OK) {
+
+            sotc_get_region_absolute_coords(selected_region, &x, &y, &w, &h);
+            new_state->x = new_state_sx - x;
+            new_state->y = new_state_sy - y;
+            new_state->w = new_state_ex - new_state_sx;
+            new_state->h = new_state_ey - new_state_sy;
+            L_DEBUG("Created new state, pr = %s", selected_region->name);
+        } else {
+            L_ERR("Could not create new state");
+        }
+        controller_state = STATE_IDLE;
+        return TRUE;
     }
+
 
 
 

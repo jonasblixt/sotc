@@ -69,18 +69,22 @@
         "y":72,
         "entries":[
           {
-            "id":"44bf3839-d782-4118-bf58-c33c5ad775c4"
+            "id":"f10998da-8bab-4a4d-80ac-b23c4949502f",
+            "action-id":"44bf3839-d782-4118-bf58-c33c5ad775c4"
           },
           {
-            "id":"f924e35f-d169-4383-b9be-bf7deba72f4a"
+            "id":"3e6b0c6f-b8d6-405e-b4be-4343fdede372",
+            "action-id":"f924e35f-d169-4383-b9be-bf7deba72f4a"
           }
         ],
         "exits":[
           {
-            "id":"1725c6b5-1a41-4a82-9831-92feb72dad6a"
+            "id":"34ab2c5b-c466-4237-a0d9-8990e6035104",
+            "action-id":"1725c6b5-1a41-4a82-9831-92feb72dad6a"
           },
           {
-            "id":"3bfebe4b-897b-47a3-b405-465f5de3c74d"
+            "id":"42ce34a2-56b8-4450-814f-67499d13c6f5",
+            "action-id":"3bfebe4b-897b-47a3-b405-465f5de3c74d"
           }
         ],
         "transitions":[
@@ -115,15 +119,18 @@
                 ],
                 "guards":[
                     {
-                        "id":"8218f025-99f2-4bdd-9397-5a5960b69fac",
+                        "id":"7e9bd415-af62-4be9-b209-948359e5ba6b",
+                        "action-id":"8218f025-99f2-4bdd-9397-5a5960b69fac",
                     }
                 ],
                 "actions":[
                     {
-                        "id":"484691a3-e873-4cc3-a39f-7d4e7fad4435",
+                        "id":"0289e886-9481-4aa0-b948-efd7b4cd07f7",
+                        "action-id":"484691a3-e873-4cc3-a39f-7d4e7fad4435",
                     },
                     {
-                        "id":"6e5efe2e-3b75-474c-b25e-1c81f6182bb1",
+                        "id":"fd1e955e-8bee-4a94-831d-135c99094b78",
+                        "action-id":"6e5efe2e-3b75-474c-b25e-1c81f6182bb1",
                     }
                 ],
                 "state-condition":[
@@ -195,10 +202,12 @@
                 "y":27,
                 "entries":[
                   {
-                    "id":"44bf3839-d782-4118-bf58-c33c5ad775c4"
+                    "id":"97cd7fdb-816c-40bb-9d26-f7ea88e31e21",
+                    "action-id":"44bf3839-d782-4118-bf58-c33c5ad775c4"
                   },
                   {
-                    "id":"f924e35f-d169-4383-b9be-bf7deba72f4a"
+                    "id":"3616ce42-5591-4008-9747-a9647838d499",
+                    "action-id":"f924e35f-d169-4383-b9be-bf7deba72f4a"
                   }
                 ],
                 "region":[

@@ -2,6 +2,7 @@
 #include <string.h>
 #include <sotc/sotc.h>
 #include <sotc/model.h>
+#include <sotc/stack.h>
 #include <json.h>
 
 
@@ -18,11 +19,15 @@ int sotc_add_state(struct sotc_region *region, const char *name,
     (*out) = state;
 
     state->name = strdup(name);
+    state->parent_region = region;
 
     uuid_generate_random(state->id);
 
-    if (region->last_state)
+    if (region->last_state) {
+        state->prev = region->last_state;
         region->last_state->next = state;
+        region->last_state = state;
+    }
     if (!region->state)
         region->state = state;
 
@@ -92,9 +97,11 @@ static int serialize_action_list(struct sotc_action_ref *list,
     struct sotc_action_ref *tmp = list;
 
     while (tmp) {
-        uuid_unparse(tmp->act->id, uuid_str);
         action = json_object_new_object();
+        uuid_unparse(tmp->id, uuid_str);
         json_object_object_add(action, "id", json_object_new_string(uuid_str));
+        uuid_unparse(tmp->act->id, uuid_str);
+        json_object_object_add(action, "action-id", json_object_new_string(uuid_str));
         json_object_array_add(output, action);
         tmp = tmp->next;
     }
@@ -334,10 +341,14 @@ int sotc_state_deserialize(struct sotc_model *model,
         {
             j_entry = json_object_array_get_idx(j_entries, n);
             json_object *j_entry_id;
+            json_object *j_id;
             uuid_t entry_id;
-            if (json_object_object_get_ex(j_entry, "id", &j_entry_id)) {
+            uuid_t id_uu;
+            if (json_object_object_get_ex(j_entry, "action-id", &j_entry_id)) {
+                json_object_object_get_ex(j_entry, "id", &j_id);
+                uuid_parse(json_object_get_string(j_id), id_uu);
                 uuid_parse(json_object_get_string(j_entry_id), entry_id);
-                rc = sotc_state_add_entry(model, state, entry_id);
+                rc = sotc_state_add_entry(model, state, id_uu, entry_id);
                 if (rc != SOTC_OK)
                     goto err_free_name_out;
             }
@@ -352,10 +363,14 @@ int sotc_state_deserialize(struct sotc_model *model,
         {
             j_exit = json_object_array_get_idx(j_exits, n);
             json_object *j_exit_id;
+            json_object *j_id;
             uuid_t exit_id;
-            if (json_object_object_get_ex(j_exit, "id", &j_exit_id)) {
+            uuid_t id_uu;
+            if (json_object_object_get_ex(j_exit, "action-id", &j_exit_id)) {
+                json_object_object_get_ex(j_exit, "id", &j_id);
+                uuid_parse(json_object_get_string(j_id), id_uu);
                 uuid_parse(json_object_get_string(j_exit_id), exit_id);
-                rc = sotc_state_add_exit(model, state, exit_id);
+                rc = sotc_state_add_exit(model, state, id_uu, exit_id);
                 if (rc != SOTC_OK)
                     goto err_free_name_out;
             }
@@ -379,16 +394,17 @@ err_out:
 
 int sotc_state_add_exit(struct sotc_model *model,
                         struct sotc_state *state,
-                        uuid_t id)
+                        uuid_t id,
+                        uuid_t action_id)
 {
     struct sotc_action *action;
     int rc;
 
-    rc = sotc_model_get_action(model, id, SOTC_ACTION_EXIT, &action);
+    rc = sotc_model_get_action(model, action_id, SOTC_ACTION_EXIT, &action);
 
     if (rc != SOTC_OK) {
         char uuid_str[37];
-        uuid_unparse(id, uuid_str);
+        uuid_unparse(action_id, uuid_str);
         L_ERR("Unkown exit action function %s", uuid_str);
         return rc;
     }
@@ -400,6 +416,7 @@ int sotc_state_add_exit(struct sotc_model *model,
         list = malloc(sizeof(struct sotc_action_ref));
         memset(list, 0, sizeof(*list));
         list->act = action;
+        memcpy(list->id, id, 16);
         state->exits = list;
     } else {
         while (list->next)
@@ -407,6 +424,7 @@ int sotc_state_add_exit(struct sotc_model *model,
         list->next = malloc(sizeof(struct sotc_action_ref));
         memset(list->next, 0, sizeof(*list->next));
         list->next->act = action;
+        memcpy(list->next->id, id, 16);
     }
 
     return SOTC_OK;
@@ -414,12 +432,13 @@ int sotc_state_add_exit(struct sotc_model *model,
 
 int sotc_state_add_entry(struct sotc_model *model,
                          struct sotc_state *state,
-                         uuid_t id)
+                         uuid_t id,
+                         uuid_t action_id)
 {
     struct sotc_action *action;
     int rc;
 
-    rc = sotc_model_get_action(model, id, SOTC_ACTION_ENTRY, &action);
+    rc = sotc_model_get_action(model, action_id, SOTC_ACTION_ENTRY, &action);
 
     if (rc != SOTC_OK) {
         char uuid_str[37];
@@ -436,6 +455,7 @@ int sotc_state_add_entry(struct sotc_model *model,
         list = malloc(sizeof(struct sotc_action_ref));
         memset(list, 0, sizeof(*list));
         list->act = action;
+        memcpy(list->id, id, 16);
         state->entries = list;
     } else {
         while (list->next)
@@ -443,6 +463,7 @@ int sotc_state_add_entry(struct sotc_model *model,
         list->next = malloc(sizeof(struct sotc_action_ref));
         memset(list->next, 0, sizeof(*list->next));
         list->next->act = action;
+        memcpy(list->next->id, id, 16);
     }
 
     return SOTC_OK;
@@ -537,9 +558,17 @@ int sotc_state_add_transition(struct sotc_state *source,
 int sotc_state_delete_transition(struct sotc_transition *transition)
 {
     struct sotc_state *s = transition->source.state;
+    struct sotc_transition *prev;
 
+    prev = transition->prev;
 
-    return SOTC_OK;
+    if (prev) {
+        prev->next = transition->next;
+    } else {
+        s->transition = transition->next;
+    }
+
+    return sotc_transition_free(transition);
 }
 
 int sotc_state_get_transitions(struct sotc_state *state,
@@ -547,4 +576,50 @@ int sotc_state_get_transitions(struct sotc_state *state,
 {
     (*transitions) = state->transition;
     return SOTC_OK;
+}
+
+int sotc_delete_state(struct sotc_state *state)
+{
+    int rc;
+    struct sotc_state *prev = state->prev;
+    struct sotc_state *next = state->next;
+    struct sotc_region *pr = state->parent_region;
+    struct sotc_state *s;
+    struct sotc_stack *stack, *free_stack;
+
+    rc = sotc_stack_init(&stack, SOTC_MAX_R_S);
+
+    if (rc != SOTC_OK)
+        return rc;
+
+    rc = sotc_stack_init(&free_stack, SOTC_MAX_R_S);
+
+    if (rc != SOTC_OK)
+        return rc;
+
+    if (prev == NULL) {
+        pr->state = next;
+    } else {
+        prev->next = next;
+    }
+
+    sotc_stack_push(stack, state);
+
+    while (sotc_stack_pop(stack, (void **) &s) == SOTC_OK) {
+        sotc_stack_push(free_stack, (void *) s);
+        free_action_ref_list(s->entries);
+        free_action_ref_list(s->exits);
+        sotc_transition_free(s->transition);
+        free((void *) s->name);
+        for (struct sotc_region *r = s->regions; r; r = r->next) {
+            sotc_stack_push(free_stack, (void *) r);
+            for (struct sotc_state *sr = r->state; sr; sr = sr->next) {
+                sotc_stack_push(stack, (void *) sr);
+            }
+        }
+    }
+
+    sotc_stack_free(stack);
+    sotc_stack_free(free_stack);
+    return rc;
 }

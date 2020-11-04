@@ -125,7 +125,7 @@ int sotc_canvas_render_transition(cairo_t *cr,
 
         if (source_kind == SOTC_STATE_NORMAL) {
             snprintf(text, sizeof(text), "%s [%s] / %s",
-                        t->trigger?t->trigger->name:"", "", "");
+                        t->trigger?t->trigger->name:"completion-event", "", "");
         } else if (source_kind == SOTC_STATE_INIT) {
             snprintf(text, sizeof(text), "/ %s", "");
         }

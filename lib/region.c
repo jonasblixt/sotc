@@ -19,8 +19,10 @@ int sotc_add_region(struct sotc_state *state, bool off_page,
 
     uuid_generate_random(region->id);
 
-    if (state->last_region)
+    if (state->last_region) {
+        region->prev = state->last_region;
         state->last_region->next = region;
+    }
     if (!state->regions)
         state->regions = region;
 
@@ -49,6 +51,7 @@ int sotc_region_append_state(struct sotc_region *r, struct sotc_state *state)
     else
     {
         r->last_state->next = state;
+        state->prev = r->last_state;
         r->last_state = state;
     }
 
