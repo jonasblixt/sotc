@@ -215,6 +215,7 @@ static int parse_root_region(struct sotc_model *model, json_object *j_region)
             model->root = r;
         }
 
+        model->no_of_regions += 1;
         L_DEBUG("Initialized region: %s ps=%s", r->name,
                 (r->parent_state != NULL)?(r->parent_state->name):"");
 
@@ -243,6 +244,7 @@ static int parse_root_region(struct sotc_model *model, json_object *j_region)
                 goto err_parse_error;
             }
 
+            model->no_of_states += 1;
             sotc_region_append_state(r, new_state);
 
             if (!json_object_object_get_ex(j_state, "region", &j_state_regions))
@@ -1286,4 +1288,169 @@ int sotc_model_deserialize_coords(json_object *j_coords,
     coords->h = json_object_get_double(jobj);
 
     return SOTC_OK;
+}
+
+int ufsm_model_calculate_max_orthogonal_regions(struct sotc_model *model)
+{
+    int rc;
+    struct sotc_region *r, *r2;
+    struct sotc_state *s;
+    static struct sotc_stack *stack;
+    unsigned int max_orth_count = 1;
+
+    rc = sotc_stack_init(&stack, SOTC_MAX_R_S);
+
+    if (rc != SOTC_OK) {
+        L_ERR("Could not init stack");
+        return -SOTC_ERROR;
+    }
+
+    rc = sotc_stack_push(stack, (void *) model->root);
+
+    while (sotc_stack_pop(stack, (void *) &r) == SOTC_OK) {
+        for (s = r->state; s; s = s->next) {
+            unsigned int r_count = 0;
+            for (r2 = s->regions; r2; r2 = r2->next) {
+                r_count++;
+                sotc_stack_push(stack, (void *) r2);
+            }
+            if (r_count > max_orth_count)
+                max_orth_count = r_count;
+        }
+    }
+
+    sotc_stack_free(stack);
+
+    if (rc != SOTC_OK)
+        return -SOTC_ERROR;
+    else
+        return max_orth_count;
+}
+
+int ufsm_model_calculate_nested_region_depth(struct sotc_model *model)
+{
+    int rc;
+    struct sotc_region *r, *r2;
+    struct sotc_state *s;
+    static struct sotc_stack *stack;
+    unsigned int nested_r_depth = 1;
+
+    rc = sotc_stack_init(&stack, SOTC_MAX_R_S);
+
+    if (rc != SOTC_OK) {
+        L_ERR("Could not init stack");
+        return -SOTC_ERROR;
+    }
+    rc = sotc_stack_push(stack, (void *) model->root);
+
+    while (sotc_stack_pop(stack, (void *) &r) == SOTC_OK) {
+        for (s = r->state; s; s = s->next) {
+
+            for (r2 = s->regions; r2; r2 = r2->next) {
+                if (r2->depth > nested_r_depth)
+                    nested_r_depth = r2->depth;
+
+                sotc_stack_push(stack, (void *) r2);
+            }
+        }
+    }
+
+    sotc_stack_free(stack);
+
+    if (rc != SOTC_OK)
+        return -SOTC_ERROR;
+    else
+        return nested_r_depth;
+}
+
+int ufsm_model_calculate_max_transitions(struct sotc_model *model)
+{
+    int rc;
+    struct sotc_region *r, *r2;
+    struct sotc_state *s;
+    static struct sotc_stack *stack;
+    unsigned int max_source_transitions = 1;
+
+    rc = sotc_stack_init(&stack, SOTC_MAX_R_S);
+
+    if (rc != SOTC_OK) {
+        L_ERR("Could not init stack");
+        return -SOTC_ERROR;
+    }
+    rc = sotc_stack_push(stack, (void *) model->root);
+
+    while (sotc_stack_pop(stack, (void *) &r) == SOTC_OK) {
+        for (s = r->state; s; s = s->next) {
+            unsigned int t_count = 0;
+
+            for (struct sotc_transition *t = s->transition; t; t = t->next)
+                t_count += 1;
+
+            if (t_count > max_source_transitions)
+                max_source_transitions = t_count;
+
+            for (r2 = s->regions; r2; r2 = r2->next) {
+                sotc_stack_push(stack, (void *) r2);
+            }
+        }
+    }
+
+    sotc_stack_free(stack);
+
+    if (rc != SOTC_OK)
+        return -SOTC_ERROR;
+    else
+        return max_source_transitions;
+}
+
+int ufsm_model_calculate_max_concurrent_states(struct sotc_model *model)
+{
+    int rc;
+    struct sotc_region *r, *r2;
+    struct sotc_state *s;
+    static struct sotc_stack *stack;
+    unsigned int max_concurrent_states = 1;
+
+    rc = sotc_stack_init(&stack, SOTC_MAX_R_S);
+
+    if (rc != SOTC_OK) {
+        L_ERR("Could not init stack");
+        return -SOTC_ERROR;
+    }
+
+    rc = sotc_stack_push(stack, (void *) model->root);
+
+    while (sotc_stack_pop(stack, (void *) &r) == SOTC_OK) {
+        for (s = r->state; s; s = s->next) {
+            unsigned int pr_count = 0;
+            /* Calculate the number of regions in parent state */
+            struct sotc_region *pr = s->parent_region;
+
+            for (; pr; pr = pr->next) {
+                pr_count++;
+            }
+
+            s->branch_concurrency_count = pr_count;
+
+            if (pr->parent_state) {
+                s->branch_concurrency_count += 
+                        pr->parent_state->branch_concurrency_count;
+            }
+
+            if (s->branch_concurrency_count > max_concurrent_states) {
+                max_concurrent_states = s->branch_concurrency_count;
+            }
+
+            for (r2 = s->regions; r2; r2 = r2->next) {
+                sotc_stack_push(stack, (void *) r2);
+            }
+        }
+    }
+
+    sotc_stack_free(stack);
+
+    if (rc != SOTC_OK)
+        return -SOTC_ERROR;
+    else
+        return max_concurrent_states;
 }

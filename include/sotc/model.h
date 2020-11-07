@@ -130,6 +130,7 @@ struct sotc_region
     double h;
     bool focus;
     bool draw_as_root;
+    unsigned int depth;
     struct sotc_state *state;
     struct sotc_state *parent_state;
     struct sotc_state *last_state;
@@ -148,6 +149,7 @@ struct sotc_state
     double region_y_offset;
     bool focus;
     bool resizeable;
+    unsigned int branch_concurrency_count;
     enum sotc_state_kind kind;
     struct sotc_transition *transition;
     struct sotc_action_ref *entries;
@@ -170,6 +172,8 @@ struct sotc_model
     struct sotc_trigger *triggers;
     const char *name;
     int version;
+    unsigned int no_of_regions;
+    unsigned int no_of_states;
 };
 
 int sotc_model_load(const char *filename, struct sotc_model **model);
@@ -193,6 +197,11 @@ int sotc_model_get_trigger(struct sotc_model *model, uuid_t id,
 
 int sotc_model_deserialize_coords(json_object *j_coords,
                                   struct sotc_coords *coords);
+
+int ufsm_model_calculate_max_orthogonal_regions(struct sotc_model *model);
+int ufsm_model_calculate_nested_region_depth(struct sotc_model *model);
+int ufsm_model_calculate_max_transitions(struct sotc_model *model);
+int ufsm_model_calculate_max_concurrent_states(struct sotc_model *model);
 
 struct sotc_action* sotc_model_get_entries(struct sotc_model *model);
 struct sotc_action* sotc_model_get_exits(struct sotc_model *model);

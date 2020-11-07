@@ -157,5 +157,9 @@ int sotc_region_deserialize(json_object *j_r, struct sotc_state *state,
 
     r->parent_state = state;
 
+    if (state) {
+        r->depth = state->parent_region->depth + 1;
+    }
+
     return SOTC_OK;
 }
